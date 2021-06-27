@@ -17,6 +17,7 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.m3sv.plainupnp.compose.util.AppTheme
 import com.m3sv.plainupnp.compose.widgets.*
 import com.m3sv.plainupnp.data.upnp.UriWrapper
 
@@ -33,9 +34,10 @@ fun SelectFoldersScreen(
         OneTitle(text = "Selected folders")
         OneToolbar(onBackClick = onBackClick) {}
     }) {
-        Column(Modifier
-            .padding(horizontal = 24.dp)
-            .padding(bottom = 24.dp)
+        Column(
+            Modifier
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 24.dp)
         ) {
             OneSubtitle(text = "Here you can select any custom directories from your file system or SD card")
 
@@ -93,13 +95,14 @@ fun SelectFoldersScreen(
                                 )
                             }
                         }) {
-                        Surface(shape = RoundedCornerShape(8.dp)) {
+                        Surface(shape = RoundedCornerShape(AppTheme.cornerRadius)) {
                             Text(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(vertical = 8.dp)
                                     .height(24.dp),
-                                text = "${uriWrapper.uriPermission.uri.path?.split(":")?.last()}")
+                                text = "${uriWrapper.uriPermission.uri.path?.split(":")?.last()}"
+                            )
                         }
                     }
                 }

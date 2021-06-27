@@ -494,7 +494,7 @@ class MainActivity : ComponentActivity() {
         val defaultState: UpnpRendererState.Default? = upnpState as? UpnpRendererState.Default
 
         Surface(
-            shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
+            shape = RoundedCornerShape(topStart = AppTheme.cornerRadius, topEnd = AppTheme.cornerRadius),
             elevation = elevation,
         ) {
             Row {

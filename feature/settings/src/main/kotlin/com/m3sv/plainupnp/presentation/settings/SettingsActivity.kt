@@ -261,7 +261,7 @@ class SettingsActivity : ComponentActivity() {
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 8.dp),
-                shape = RoundedCornerShape(16.dp)
+                shape = RoundedCornerShape(AppTheme.cornerRadius)
             ) {
                 Column(content = sectionContent)
             }

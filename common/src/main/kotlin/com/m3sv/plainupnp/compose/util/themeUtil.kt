@@ -5,6 +5,7 @@ import androidx.compose.material.darkColors
 import androidx.compose.material.lightColors
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 
 private val primaryColor = Color(0xFF81c784)
 
@@ -22,5 +23,12 @@ private val darkColors = darkColors(
 
 @Composable
 fun AppTheme(isDarkTheme: Boolean, content: @Composable () -> Unit) {
-    MaterialTheme(if (isDarkTheme) darkColors else lightColors, content = content)
+    MaterialTheme(
+        colors = if (isDarkTheme) darkColors else lightColors,
+        content = content
+    )
+}
+
+object AppTheme {
+    val cornerRadius = 16.dp
 }

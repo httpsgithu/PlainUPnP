@@ -10,6 +10,7 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.sp
+import com.m3sv.plainupnp.compose.util.AppTheme
 
 @Composable
 fun OneContainedButton(modifier: Modifier = Modifier, text: String, onClick: () -> Unit) {
@@ -20,7 +21,7 @@ fun OneContainedButton(modifier: Modifier = Modifier, text: String, onClick: () 
         Button(
             modifier = modifier.fillMaxWidth(0.75f),
             onClick = onClick,
-            shape = RoundedCornerShape(50),
+            shape = RoundedCornerShape(AppTheme.cornerRadius),
         ) {
             Text(
                 text = text,
