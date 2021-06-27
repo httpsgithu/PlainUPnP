@@ -3,7 +3,7 @@ package com.m3sv.plainupnp.di
 import android.app.Application
 import android.content.Intent
 import com.m3sv.plainupnp.common.preferences.PreferencesRepository
-import com.m3sv.plainupnp.core.persistence.Database
+import com.m3sv.plainupnp.core.persistence.PlainDb
 import com.m3sv.plainupnp.presentation.onboarding.OnboardingManager
 import com.m3sv.selectcontentdirectory.SelectContentDirectoryActivity
 import com.squareup.sqldelight.android.AndroidSqliteDriver
@@ -28,5 +28,5 @@ object AppModule {
     @Provides
     @Singleton
     fun provideDatabase(application: Application) =
-        Database(AndroidSqliteDriver(Database.Schema, application, "plainupnp.db"))
+        PlainDb(AndroidSqliteDriver(PlainDb.Schema, application, "plainupnp.db"))
 }

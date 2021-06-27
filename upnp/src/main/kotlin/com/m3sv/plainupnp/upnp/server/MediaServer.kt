@@ -5,7 +5,7 @@ import android.content.ContentUris
 import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
-import com.m3sv.plainupnp.core.persistence.Database
+import com.m3sv.plainupnp.core.persistence.PlainDb
 import com.m3sv.plainupnp.logging.Log
 import com.m3sv.plainupnp.upnp.UpnpContentRepositoryImpl.Companion.AUDIO_PREFIX
 import com.m3sv.plainupnp.upnp.UpnpContentRepositoryImpl.Companion.IMAGE_PREFIX
@@ -28,7 +28,7 @@ import javax.inject.Singleton
 @Singleton
 class MediaServer @Inject constructor(
     private val application: Application,
-    private val database: Database,
+    private val database: PlainDb,
     private val log: Log
 ) : SimpleInputStreamServer(null, PORT, listOf(), true) {
 

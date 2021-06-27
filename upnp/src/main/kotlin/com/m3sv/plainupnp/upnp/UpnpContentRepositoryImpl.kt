@@ -7,7 +7,7 @@ import android.provider.MediaStore
 import androidx.documentfile.provider.DocumentFile
 import com.m3sv.plainupnp.ContentRepository
 import com.m3sv.plainupnp.common.preferences.PreferencesRepository
-import com.m3sv.plainupnp.core.persistence.Database
+import com.m3sv.plainupnp.core.persistence.PlainDb
 import com.m3sv.plainupnp.logging.Log
 import com.m3sv.plainupnp.upnp.mediacontainers.*
 import com.m3sv.plainupnp.upnp.util.*
@@ -32,7 +32,7 @@ sealed class ContentUpdateState {
 @Singleton
 class UpnpContentRepositoryImpl @Inject constructor(
     private val application: Application,
-    private val database: Database,
+    private val database: PlainDb,
     private val preferencesRepository: PreferencesRepository,
     private val log: Log
 ) : CoroutineScope, ContentRepository {
