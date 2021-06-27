@@ -85,8 +85,9 @@ class MainActivity : ComponentActivity() {
             val renderers by viewModel.renderers.collectAsState()
             val upnpState by viewModel.upnpState.collectAsState()
             val showThumbnails by viewModel.showThumbnails.collectAsState()
-            val isSelectRendererButtonExpanded by viewModel.isSelectRendererButtonExpanded.collectAsState()
-            val isSelectRendererDialogExpanded by viewModel.isSelectRendererDialogExpanded.collectAsState()
+            val isSelectRendererButtonExpanded: Boolean by viewModel.isSelectRendererButtonExpanded.collectAsState()
+            val isSelectRendererDialogExpanded: Boolean by viewModel.isSelectRendererDialogExpanded.collectAsState()
+            val isSettingsDialogExpanded: Boolean by viewModel.isSettingsDialogExpanded.collectAsState()
 
             val currentTheme by themeManager.collectTheme()
 
@@ -97,16 +98,6 @@ class MainActivity : ComponentActivity() {
             fun clearFilterText() {
                 viewModel.filterInput("")
             }
-
-            val onFilterClick: () -> Unit = {
-                showFilter = !showFilter
-
-                if (!showFilter) {
-                    clearFilterText()
-                }
-            }
-
-            val onSettingsClick: () -> Unit = { openSettings() }
 
             fun collapseExpandedButton() {
                 lifecycleScope.launch { viewModel.collapseSelectRendererButton() }
@@ -153,6 +144,21 @@ class MainActivity : ComponentActivity() {
                 )
             }
 
+            val settings: @Composable RowScope.() -> Unit = {
+                SettingsMenu(
+                    isExpanded = isSettingsDialogExpanded,
+                    onExpandDialog = viewModel::expandSettingsDialog,
+                    onDismissDialog = viewModel::collapseSettingsDialog,
+                    onSettingsClick = { openSettings() },
+                    onFilterClick = {
+                        showFilter = !showFilter
+
+                        if (!showFilter) {
+                            clearFilterText()
+                        }
+                    })
+            }
+
             AppTheme(currentTheme.isDarkTheme()) {
                 Surface {
                     Box {
@@ -165,9 +171,11 @@ class MainActivity : ComponentActivity() {
                                     showControls = showControls,
                                     floatingActionButton = { createFloatingActionButton() },
                                     filter = filter,
-                                    navigationBar = navigationBar,
-                                    onFilterClick = onFilterClick,
-                                    onSettingsClick = onSettingsClick,
+                                    toolbar = {
+                                        Toolbar(settings) {
+                                            navigationBar(Modifier)
+                                        }
+                                    },
                                     folderContents = folderContents
                                 )
                             }
@@ -181,8 +189,9 @@ class MainActivity : ComponentActivity() {
                                     floatingActionButton = { createFloatingActionButton() },
                                     filter = filter,
                                     navigationBar = navigationBar,
-                                    onFilterClick = onFilterClick,
-                                    onSettingsClick = onSettingsClick,
+                                    toolbar = {
+                                        Toolbar(settings)
+                                    }
                                 )
                             }
                         }
@@ -250,18 +259,14 @@ class MainActivity : ComponentActivity() {
         upnpState: UpnpRendererState,
         showControls: Boolean,
         loading: Boolean,
-        onFilterClick: () -> Unit,
-        onSettingsClick: () -> Unit,
         navigationBar: ModifierComposableFactory,
         folderContents: ModifierComposableFactory,
+        toolbar: @Composable ColumnScope.() -> Unit,
         floatingActionButton: @Composable BoxScope.() -> Unit,
         filter: ComposableFactory,
     ) {
         Column {
-            Toolbar(
-                onSettingsClick = onSettingsClick,
-                onFilterClick = onFilterClick
-            )
+            toolbar()
 
             navigationBar(Modifier.padding(start = 16.dp))
             LoadingIndicator(loading)
@@ -292,21 +297,13 @@ class MainActivity : ComponentActivity() {
         upnpState: UpnpRendererState,
         showControls: Boolean,
         loading: Boolean,
-        onFilterClick: () -> Unit,
-        onSettingsClick: () -> Unit,
+        toolbar: @Composable ColumnScope.() -> Unit,
         folderContents: ModifierComposableFactory,
-        navigationBar: ModifierComposableFactory,
         floatingActionButton: ComposableFactory,
         filter: ComposableFactory,
     ) {
         Column {
-            Toolbar(
-                onSettingsClick = onSettingsClick,
-                onFilterClick = onFilterClick
-            ) {
-                navigationBar(Modifier)
-            }
-
+            toolbar()
             LoadingIndicator(loading)
 
             val transition = updateTransition(targetState = showControls, label = "")
@@ -625,8 +622,7 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     private fun Toolbar(
-        onSettingsClick: () -> Unit,
-        onFilterClick: () -> Unit,
+        settingsMenu: @Composable RowScope.() -> Unit,
         content: @Composable RowScope.() -> Unit = {}
     ) {
         Box {
@@ -634,20 +630,21 @@ class MainActivity : ComponentActivity() {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     content()
                     Spacer(modifier = Modifier.weight(1f))
-                    SettingsMenu(
-                        onSettingsClick = onSettingsClick,
-                        onFilterClick = onFilterClick
-                    )
+                    settingsMenu()
                 }
             }
         }
     }
 
     @Composable
-    private fun SettingsMenu(onSettingsClick: () -> Unit, onFilterClick: () -> Unit) {
-        var expanded by remember { mutableStateOf(false) }
-
-        IconButton(onClick = { expanded = true }) {
+    private fun SettingsMenu(
+        isExpanded: Boolean,
+        onExpandDialog: () -> Unit,
+        onDismissDialog: () -> Unit,
+        onSettingsClick: () -> Unit,
+        onFilterClick: () -> Unit
+    ) {
+        IconButton(onClick = onExpandDialog) {
             Icon(
                 Icons.Default.MoreVert,
                 contentDescription = null,
@@ -656,13 +653,13 @@ class MainActivity : ComponentActivity() {
         }
 
         DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
+            expanded = isExpanded,
+            onDismissRequest = onDismissDialog,
             offset = DpOffset((-100).dp, 0.dp),
         ) {
             DropdownMenuItem(
                 onClick = {
-                    expanded = false
+                    onDismissDialog()
                     onFilterClick()
                 }
             ) {
@@ -671,7 +668,7 @@ class MainActivity : ComponentActivity() {
 
             DropdownMenuItem(
                 onClick = {
-                    expanded = false
+                    onDismissDialog()
                     onSettingsClick()
                 }
             ) {

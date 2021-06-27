@@ -124,6 +124,10 @@ class MainViewModel @Inject constructor(
 
     val isSelectRendererDialogExpanded: StateFlow<Boolean> = _isSelectRendererDialogExpanded
 
+    private val _isSettingsDialogExpanded = MutableStateFlow(false)
+
+    val isSettingsDialogExpanded: StateFlow<Boolean> = _isSettingsDialogExpanded
+
     fun itemClick(id: String) {
         viewModelScope.launch {
             upnpManager
@@ -148,6 +152,14 @@ class MainViewModel @Inject constructor(
 
     fun collapseSelectRendererDialog() {
         _isSelectRendererDialogExpanded.value = false
+    }
+
+    fun expandSettingsDialog() {
+        _isSettingsDialogExpanded.value = true
+    }
+
+    fun collapseSettingsDialog() {
+        _isSettingsDialogExpanded.value = false
     }
 
     fun moveTo(progress: Int) {
@@ -186,4 +198,5 @@ class MainViewModel @Inject constructor(
             _filterText.emit(text)
         }
     }
+
 }
