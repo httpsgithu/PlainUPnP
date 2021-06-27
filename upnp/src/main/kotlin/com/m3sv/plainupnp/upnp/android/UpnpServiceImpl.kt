@@ -2,6 +2,10 @@ package com.m3sv.plainupnp.upnp.android
 
 import android.content.Context
 import com.m3sv.plainupnp.logging.Log
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import org.fourthline.cling.UpnpService
 import org.fourthline.cling.UpnpServiceConfiguration
 import org.fourthline.cling.controlpoint.ControlPoint
@@ -66,21 +70,17 @@ abstract class UpnpServiceImpl(
 
     @Synchronized
     override fun shutdown() {
-        this.shutdown(false)
+        shutdownInternal()
     }
 
-    protected fun shutdown(separateThread: Boolean) {
-        val shutdown = Runnable {
+    @DelicateCoroutinesApi
+    private fun shutdownInternal() {
+        GlobalScope.launch(Dispatchers.Default) {
             Timber.i(">>> Shutting down UPnP service...")
             shutdownRegistry()
             shutdownRouter()
             shutdownConfiguration()
             Timber.i("<<< UPnP service shutdown completed")
-        }
-        if (separateThread) {
-            Thread(shutdown).start()
-        } else {
-            shutdown.run()
         }
     }
 

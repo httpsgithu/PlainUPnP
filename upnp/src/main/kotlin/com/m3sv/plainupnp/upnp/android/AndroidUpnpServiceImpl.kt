@@ -91,7 +91,7 @@ class AndroidUpnpServiceImpl @Inject constructor(
 
     override fun shutdown() {
         (router as AndroidRouter).unregisterBroadcastReceiver()
-        super.shutdown(false)
+        super.shutdown()
     }
 
     private fun getLocalDevice(
