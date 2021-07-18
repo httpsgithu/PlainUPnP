@@ -11,6 +11,9 @@ creator TEXT,
 album TEXT
 );
 
+selectAll:
+SELECT * FROM fileCache;
+
 selectByUri:
 SELECT * FROM fileCache WHERE uri=?;
 

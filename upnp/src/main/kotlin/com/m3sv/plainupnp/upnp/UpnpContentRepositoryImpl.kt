@@ -19,7 +19,6 @@ import timber.log.Timber
 import java.security.SecureRandom
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlin.coroutines.CoroutineContext
 import kotlin.math.abs
 
 typealias ContentCache = MutableMap<Long, BaseContainer>
@@ -35,39 +34,30 @@ class UpnpContentRepositoryImpl @Inject constructor(
     private val database: PlainDb,
     private val preferencesRepository: PreferencesRepository,
     private val log: Log
-) : CoroutineScope, ContentRepository {
-
-    override val coroutineContext: CoroutineContext
-        get() = SupervisorJob() + Dispatchers.IO
+) : ContentRepository {
 
     val containerRegistry: MutableMap<Long, BaseContainer> = mutableMapOf()
 
-    private val random = SecureRandom()
-
-    private val randomId
-        get() = abs(random.nextLong())
-
+    private val scope = CoroutineScope(Dispatchers.IO)
     private val appName by lazy { application.getString(R.string.app_name) }
-    private val baseUrl: String by lazy { "${getLocalIpAddress(application, log).hostAddress}:$PORT" }
-
+    private val baseUrl by lazy { "${getLocalIpAddress(application, log).hostAddress}:$PORT" }
     private val refreshInternal = MutableSharedFlow<Unit>()
-
-    private val _updateState: MutableStateFlow<ContentUpdateState> =
+    private val _refreshState: MutableStateFlow<ContentUpdateState> =
         MutableStateFlow(ContentUpdateState.Ready(containerRegistry))
 
-    val updateState: Flow<ContentUpdateState> = _updateState
+    val refreshState: Flow<ContentUpdateState> = _refreshState
 
     init {
-        launch {
+        scope.launch {
             refreshInternal.collect {
                 Timber.d("Updating content")
-                _updateState.value = ContentUpdateState.Loading
+                _refreshState.value = ContentUpdateState.Loading
                 refreshInternal()
-                _updateState.value = ContentUpdateState.Ready(containerRegistry)
+                _refreshState.value = ContentUpdateState.Ready(containerRegistry)
             }
         }
 
-        launch {
+        scope.launch {
             preferencesRepository
                 .updateFlow
                 .debounce(2000)
@@ -75,54 +65,52 @@ class UpnpContentRepositoryImpl @Inject constructor(
         }
     }
 
-    val init by lazy {
-        runBlocking { refreshInternal() }
+    override fun refreshContent() {
+        scope.launch { refreshInternal.emit(Unit) }
     }
 
-    override fun refreshContent() {
-        launch { refreshInternal.emit(Unit) }
+    override fun refreshBlocking() {
+        runBlocking {
+            refreshInternal()
+        }
     }
 
     private suspend fun refreshInternal() = coroutineScope {
         containerRegistry.clear()
 
-        Container(
-            ROOT_ID.toString(),
-            ROOT_ID.toString(),
-            appName,
-            appName
-        ).addToRegistry()
+        val rootContainer = createRootContainer().also { container -> container.addToRegistry() }
 
-        val rootContainer: BaseContainer = requireNotNull(containerRegistry[ROOT_ID])
-
-        val jobs = mutableListOf<Deferred<Unit>>()
-
-        with(requireNotNull(preferencesRepository.preferences.value)) {
-            if (enableImages) {
-                jobs += async {
+        preferencesRepository.preferences.value.let { preferences ->
+            if (preferences.enableImages) {
+                launch {
                     getRootImagesContainer()
                         .also(rootContainer::addContainer)
                         .addToRegistry()
                 }
             }
 
-            if (enableAudio) {
-                jobs += async {
+            if (preferences.enableAudio) {
+                launch {
                     getRootAudioContainer(rootContainer).addToRegistry()
                 }
             }
 
-            if (enableVideos) {
-                jobs += async {
+            if (preferences.enableVideos) {
+                launch {
                     getRootVideoContainer(rootContainer).addToRegistry()
                 }
             }
         }
 
-        jobs += async { getUserSelectedContainer(rootContainer as Container) }
-
-        jobs.joinAll()
+        launch { getUserSelectedContainer(rootContainer) }
     }
+
+    private fun createRootContainer() = Container(
+        ROOT_ID.toString(),
+        ROOT_ID.toString(),
+        appName,
+        appName
+    )
 
     fun getAudioContainerForAlbum(
         albumId: String,
@@ -340,16 +328,22 @@ class UpnpContentRepositoryImpl @Inject constructor(
         }
 
     private fun getUserSelectedContainer(rootContainer: Container) {
+        val containersCache = database.directoryCacheQueries.selectAll().executeAsList().associateBy { it.uri }
+        val filesCache = database.fileCacheQueries.selectAll().executeAsList().associateBy { it.uri }
+
         application
             .contentResolver
             .persistedUriPermissions
-            .map { it.uri }
-            .mapNotNull { DocumentFile.fromTreeUri(application, it) }
+            .mapNotNull { urlPermission -> DocumentFile.fromTreeUri(application, urlPermission.uri) }
             .forEach { documentFile ->
                 when {
-                    documentFile.isDirectory -> handleDirectory(documentFile, rootContainer)
-                    documentFile.isFile -> queryUri(documentFile.uri, rootContainer)
-
+                    documentFile.isDirectory -> handleDirectory(
+                        containersCache,
+                        filesCache,
+                        documentFile,
+                        rootContainer
+                    )
+                    documentFile.isFile -> queryUri(filesCache, documentFile.uri, rootContainer)
                     documentFile.isVirtual -> {
                         // TODO not supported yet
                     }
@@ -358,36 +352,32 @@ class UpnpContentRepositoryImpl @Inject constructor(
     }
 
     private fun handleDirectory(
+        containerCache: Map<String, DirectoryCache>,
+        filesCache: Map<String, FileCache>,
         documentFile: DocumentFile,
         rootContainer: Container,
     ) {
-        if (isContainerCached(documentFile.uri)) {
-            return
-        }
+        val uri = documentFile.uri
+        val cachedDirectory = containerCache[uri.toString()]
+        if (cachedDirectory != null) {
+            createContainer(cachedDirectory._id, rootContainer.rawId, cachedDirectory.name)
+        } else {
+            createFolderContainer(uri, rootContainer.rawId)
+        }?.let { parentContainer: Container ->
+            rootContainer.addContainer(parentContainer)
+            parentContainer.addToRegistry()
 
-        queryOrCreateContainer(documentFile.uri, rootContainer)?.let { parentContainer ->
-            documentFile.listFiles().forEach {
+            documentFile.listFiles().forEach { documentFile ->
                 when {
-                    it.isFile -> queryUri(it.uri, parentContainer)
-                    it.isDirectory -> handleDirectory(it, parentContainer)
+                    documentFile.isFile -> queryUri(filesCache, documentFile.uri, parentContainer)
+                    documentFile.isDirectory -> handleDirectory(
+                        containerCache,
+                        filesCache,
+                        documentFile,
+                        parentContainer
+                    )
                 }
             }
-        }
-    }
-
-    private fun isContainerCached(uri: Uri): Boolean {
-        val cachedEntry =
-            database.directoryCacheQueries.selectByUri(uri.toString()).executeAsList().lastOrNull() ?: return false
-        return containerRegistry[cachedEntry._id] != null
-    }
-
-    private fun queryOrCreateContainer(uri: Uri, parentContainer: Container): Container? {
-        return (database.directoryCacheQueries.selectByUri(uri.toString()).executeAsList().lastOrNull()
-            ?.let { cachedValue ->
-                createContainer(cachedValue._id, parentContainer.rawId, cachedValue.name)
-            } ?: createFolderContainer(uri, parentContainer.rawId))?.also {
-            parentContainer.addContainer(it)
-            it.addToRegistry()
         }
     }
 
@@ -406,7 +396,9 @@ class UpnpContentRepositoryImpl @Inject constructor(
                 val id = randomId
                 val name = cursor.getString(nameColumn)
 
-                database.directoryCacheQueries.insertEntry(DirectoryCache(id, uri.toString(), name))
+                scope.launch {
+                    database.directoryCacheQueries.insertEntry(DirectoryCache(id, uri.toString(), name))
+                }
                 createContainer(id, parentId, name)
             } else
                 null
@@ -419,165 +411,166 @@ class UpnpContentRepositoryImpl @Inject constructor(
     ) = Container(id.toString(), parentId, "${USER_DEFINED_PREFIX}$name", null)
 
     private fun queryUri(
+        filesCache: Map<String, FileCache>,
         uri: Uri,
         parentContainer: Container,
     ) {
-        getCachedFile(uri)?.apply {
-            val id = "${TREE_PREFIX}$_id"
+        val cachedFile = filesCache[uri.toString()]
+        if (cachedFile != null) {
+            val id = "${TREE_PREFIX}${cachedFile._id}"
             when {
-                mime.startsWith("image") -> {
+                cachedFile.mime.startsWith("image") -> {
                     parentContainer.addImageItem(
                         baseUrl = baseUrl,
                         id = id,
-                        name = name ?: "",
-                        mime = mime,
-                        width = width ?: 0L,
-                        height = height ?: 0L,
-                        size = size
+                        name = cachedFile.name ?: "",
+                        mime = cachedFile.mime,
+                        width = cachedFile.width ?: 0L,
+                        height = cachedFile.height ?: 0L,
+                        size = cachedFile.size
                     )
                 }
-                mime.startsWith("audio") -> {
+                cachedFile.mime.startsWith("audio") -> {
                     parentContainer.addAudioItem(
                         baseUrl = baseUrl,
                         id = id,
-                        name = name ?: "",
-                        mime = mime,
-                        width = width ?: 0L,
-                        height = height ?: 0L,
-                        size = size,
-                        duration = duration ?: 0L,
-                        album = album ?: "",
-                        creator = creator ?: ""
+                        name = cachedFile.name ?: "",
+                        mime = cachedFile.mime,
+                        width = cachedFile.width ?: 0L,
+                        height = cachedFile.height ?: 0L,
+                        size = cachedFile.size,
+                        duration = cachedFile.duration ?: 0L,
+                        album = cachedFile.album ?: "",
+                        creator = cachedFile.creator ?: ""
                     )
                 }
-                mime.startsWith("video") -> {
+                cachedFile.mime.startsWith("video") -> {
                     parentContainer.addVideoItem(
                         baseUrl = baseUrl,
                         id = id,
-                        name = name ?: "",
-                        mime = mime,
-                        width = width ?: 0L,
-                        height = height ?: 0L,
-                        size = size,
-                        duration = duration ?: 0L
+                        name = cachedFile.name ?: "",
+                        mime = cachedFile.mime,
+                        width = cachedFile.width ?: 0L,
+                        height = cachedFile.height ?: 0L,
+                        size = cachedFile.size,
+                        duration = cachedFile.duration ?: 0L
                     )
                 }
             }
-        } ?: application
-            .contentResolver
-            .query(
-                uri,
-                arrayOf(
-                    MediaStore.MediaColumns._ID,
-                    MediaStore.MediaColumns.MIME_TYPE
-                ), null, null, null
-            )
-            ?.use { cursor ->
-                val mimeTypeColumn = cursor.getColumnIndex(MediaStore.MediaColumns.MIME_TYPE)
+        } else {
+            application
+                .contentResolver
+                .query(
+                    uri,
+                    arrayOf(
+                        MediaStore.MediaColumns._ID,
+                        MediaStore.MediaColumns.MIME_TYPE
+                    ), null, null, null
+                )
+                ?.use { cursor ->
+                    val mimeTypeColumn = cursor.getColumnIndex(MediaStore.MediaColumns.MIME_TYPE)
 
-                while (cursor.moveToNext()) {
-                    val id = randomId
-                    val mimeType = cursor.getString(mimeTypeColumn)
-                    when {
-                        mimeType.startsWith("image") -> application.contentResolver.queryImages(uri) { _, title, _, size, width, height ->
-                            database
-                                .fileCacheQueries
-                                .insertEntry(
-                                    FileCache(
-                                        _id = id,
-                                        uri = uri.toString(),
-                                        mime = mimeType,
-                                        name = title,
-                                        width = width,
-                                        height = height,
-                                        duration = null,
-                                        size = size,
-                                        creator = null,
-                                        album = null
+                    while (cursor.moveToNext()) {
+                        val id = randomId
+                        val mimeType = cursor.getString(mimeTypeColumn)
+                        when {
+                            mimeType.startsWith("image") -> application.contentResolver.queryImages(uri) { _, title, _, size, width, height ->
+                                database
+                                    .fileCacheQueries
+                                    .insertEntry(
+                                        FileCache(
+                                            _id = id,
+                                            uri = uri.toString(),
+                                            mime = mimeType,
+                                            name = title,
+                                            width = width,
+                                            height = height,
+                                            duration = null,
+                                            size = size,
+                                            creator = null,
+                                            album = null
+                                        )
                                     )
+
+                                parentContainer.addImageItem(
+                                    baseUrl = baseUrl,
+                                    id = "${TREE_PREFIX}$id",
+                                    name = title,
+                                    mime = mimeType,
+                                    width = width,
+                                    height = height,
+                                    size = size
                                 )
 
-                            parentContainer.addImageItem(
-                                baseUrl = baseUrl,
-                                id = "${TREE_PREFIX}$id",
-                                name = title,
-                                mime = mimeType,
-                                width = width,
-                                height = height,
-                                size = size
-                            )
+                            }
 
-                        }
-
-                        mimeType.startsWith("video") -> application.contentResolver.queryVideos(uri) { _, title, creator, _, size, duration, width, height ->
-                            database
-                                .fileCacheQueries
-                                .insertEntry(
-                                    FileCache(
-                                        _id = id,
-                                        uri = uri.toString(),
-                                        mime = mimeType,
-                                        name = title,
-                                        width = width,
-                                        height = height,
-                                        duration = null,
-                                        size = size,
-                                        creator = null,
-                                        album = null
+                            mimeType.startsWith("video") -> application.contentResolver.queryVideos(uri) { _, title, creator, _, size, duration, width, height ->
+                                database
+                                    .fileCacheQueries
+                                    .insertEntry(
+                                        FileCache(
+                                            _id = id,
+                                            uri = uri.toString(),
+                                            mime = mimeType,
+                                            name = title,
+                                            width = width,
+                                            height = height,
+                                            duration = null,
+                                            size = size,
+                                            creator = null,
+                                            album = null
+                                        )
                                     )
+
+                                parentContainer.addVideoItem(
+                                    baseUrl = baseUrl,
+                                    id = "${TREE_PREFIX}$id",
+                                    name = title,
+                                    mime = mimeType,
+                                    width = width,
+                                    height = height,
+                                    size = size,
+                                    duration = duration
                                 )
+                            }
 
-                            parentContainer.addVideoItem(
-                                baseUrl = baseUrl,
-                                id = "${TREE_PREFIX}$id",
-                                name = title,
-                                mime = mimeType,
-                                width = width,
-                                height = height,
-                                size = size,
-                                duration = duration
-                            )
-                        }
-
-                        mimeType.startsWith("audio") -> application.contentResolver.queryAudio(uri) { _, title, creator, _, size, duration, width, height, artist, album ->
-                            database
-                                .fileCacheQueries
-                                .insertEntry(
-                                    FileCache(
-                                        _id = id,
-                                        uri = uri.toString(),
-                                        mime = mimeType,
-                                        name = title,
-                                        width = width,
-                                        height = height,
-                                        duration = null,
-                                        size = size,
-                                        creator = null,
-                                        album = null
+                            mimeType.startsWith("audio") -> application.contentResolver.queryAudio(uri) { _, title, creator, _, size, duration, width, height, artist, album ->
+                                database
+                                    .fileCacheQueries
+                                    .insertEntry(
+                                        FileCache(
+                                            _id = id,
+                                            uri = uri.toString(),
+                                            mime = mimeType,
+                                            name = title,
+                                            width = width,
+                                            height = height,
+                                            duration = null,
+                                            size = size,
+                                            creator = null,
+                                            album = null
+                                        )
                                     )
-                                )
 
-                            parentContainer.addAudioItem(
-                                baseUrl = baseUrl,
-                                id = "${TREE_PREFIX}$id",
-                                name = title,
-                                mime = mimeType,
-                                width = width,
-                                height = height,
-                                size = size,
-                                duration = duration,
-                                album = album ?: "",
-                                creator = creator ?: ""
-                            )
+                                parentContainer.addAudioItem(
+                                    baseUrl = baseUrl,
+                                    id = "${TREE_PREFIX}$id",
+                                    name = title,
+                                    mime = mimeType,
+                                    width = width,
+                                    height = height,
+                                    size = size,
+                                    duration = duration,
+                                    album = album ?: "",
+                                    creator = creator ?: ""
+                                )
+                            }
                         }
                     }
                 }
-            }
+        }
     }
 
-    private fun getCachedFile(uri: Uri): FileCache? {
-        return database.fileCacheQueries.selectByUri(uri.toString()).executeAsList().lastOrNull()
-    }
 
     private fun generateContainerStructure(
         column: String,
@@ -683,5 +676,9 @@ class UpnpContentRepositoryImpl @Inject constructor(
         const val AUDIO_PREFIX = "a-"
         const val IMAGE_PREFIX = "i-"
         const val TREE_PREFIX = "t-"
+
+        private val random = SecureRandom()
+        private val randomId
+            get() = abs(random.nextLong())
     }
 }

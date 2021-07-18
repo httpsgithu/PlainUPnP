@@ -142,7 +142,7 @@ class UpnpManagerImpl @Inject constructor(
         }
 
         launch {
-            contentRepository.updateState.collect {
+            contentRepository.refreshState.collect {
                 if (it is ContentUpdateState.Ready) {
                     val contentDirectory = contentDirectoryObservable.selectedContentDirectory
 

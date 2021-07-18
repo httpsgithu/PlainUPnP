@@ -28,9 +28,9 @@ class ContentDirectoryService : AbstractContentDirectoryService() {
         maxResults: Long,
         orderby: Array<SortCriterion>,
     ): BrowseResult {
-        contentRepository.init
-
         try {
+            contentRepository.refreshBlocking()
+
             val url = objectID
                 .split(SEPARATOR)
                 .map(String::toLong)
