@@ -29,7 +29,7 @@ class ContentDirectoryService : AbstractContentDirectoryService() {
         orderby: Array<SortCriterion>,
     ): BrowseResult {
         try {
-            contentRepository.refreshBlocking()
+            contentRepository.init()
 
             val url = objectID
                 .split(SEPARATOR)
@@ -48,8 +48,8 @@ class ContentDirectoryService : AbstractContentDirectoryService() {
             val container: BaseContainer? = when {
                 // drop AUDIO_ID, we don't care about it
                 root == AUDIO_ID && url.size > 1 -> handleAudioContainerSelection(url.drop(1))
-                    ?: contentRepository.containerRegistry[end]
-                else -> contentRepository.containerRegistry[end]
+                    ?: contentRepository.containerCache[end]
+                else -> contentRepository.containerCache[end]
             }
 
             return getBrowseResult(container ?: throw noSuchObject)

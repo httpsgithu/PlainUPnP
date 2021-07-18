@@ -36,14 +36,14 @@ class UpnpContentRepositoryImpl @Inject constructor(
     private val log: Log
 ) : ContentRepository {
 
-    val containerRegistry: MutableMap<Long, BaseContainer> = mutableMapOf()
+    val containerCache: MutableMap<Long, BaseContainer> = mutableMapOf()
 
     private val scope = CoroutineScope(Dispatchers.IO)
     private val appName by lazy { application.getString(R.string.app_name) }
     private val baseUrl by lazy { "${getLocalIpAddress(application, log).hostAddress}:$PORT" }
     private val refreshInternal = MutableSharedFlow<Unit>()
     private val _refreshState: MutableStateFlow<ContentUpdateState> =
-        MutableStateFlow(ContentUpdateState.Ready(containerRegistry))
+        MutableStateFlow(ContentUpdateState.Ready(containerCache))
 
     val refreshState: Flow<ContentUpdateState> = _refreshState
 
@@ -53,7 +53,7 @@ class UpnpContentRepositoryImpl @Inject constructor(
                 Timber.d("Updating content")
                 _refreshState.value = ContentUpdateState.Loading
                 refreshInternal()
-                _refreshState.value = ContentUpdateState.Ready(containerRegistry)
+                _refreshState.value = ContentUpdateState.Ready(containerCache)
             }
         }
 
@@ -69,14 +69,18 @@ class UpnpContentRepositoryImpl @Inject constructor(
         scope.launch { refreshInternal.emit(Unit) }
     }
 
-    override fun refreshBlocking() {
+    private val init by lazy {
         runBlocking {
             refreshInternal()
         }
     }
 
+    override fun init() {
+        init
+    }
+
     private suspend fun refreshInternal() = coroutineScope {
-        containerRegistry.clear()
+        containerCache.clear()
 
         val rootContainer = createRootContainer().also { container -> container.addToRegistry() }
 
@@ -141,7 +145,7 @@ class UpnpContentRepositoryImpl @Inject constructor(
     )
 
     private fun BaseContainer.addToRegistry() {
-        containerRegistry[rawId.toLong()] = this
+        containerCache[rawId.toLong()] = this
     }
 
     private fun getRootImagesContainer(): BaseContainer {
@@ -327,28 +331,32 @@ class UpnpContentRepositoryImpl @Inject constructor(
             }
         }
 
-    private fun getUserSelectedContainer(rootContainer: Container) {
+    private suspend fun getUserSelectedContainer(rootContainer: Container) = coroutineScope {
         val containersCache = database.directoryCacheQueries.selectAll().executeAsList().associateBy { it.uri }
         val filesCache = database.fileCacheQueries.selectAll().executeAsList().associateBy { it.uri }
 
-        application
+        val jobs = application
             .contentResolver
             .persistedUriPermissions
             .mapNotNull { urlPermission -> DocumentFile.fromTreeUri(application, urlPermission.uri) }
-            .forEach { documentFile ->
-                when {
-                    documentFile.isDirectory -> handleDirectory(
-                        containersCache,
-                        filesCache,
-                        documentFile,
-                        rootContainer
-                    )
-                    documentFile.isFile -> queryUri(filesCache, documentFile.uri, rootContainer)
-                    documentFile.isVirtual -> {
-                        // TODO not supported yet
+            .map { documentFile ->
+                async {
+                    when {
+                        documentFile.isDirectory -> handleDirectory(
+                            containersCache,
+                            filesCache,
+                            documentFile,
+                            rootContainer
+                        )
+                        documentFile.isFile -> queryUri(filesCache, documentFile.uri, rootContainer)
+                        documentFile.isVirtual -> {
+                            // TODO not supported yet
+                        }
                     }
                 }
             }
+
+        jobs.awaitAll()
     }
 
     private fun handleDirectory(
@@ -359,6 +367,7 @@ class UpnpContentRepositoryImpl @Inject constructor(
     ) {
         val uri = documentFile.uri
         val cachedDirectory = containerCache[uri.toString()]
+
         if (cachedDirectory != null) {
             createContainer(cachedDirectory._id, rootContainer.rawId, cachedDirectory.name)
         } else {
