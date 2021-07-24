@@ -1,6 +1,7 @@
 package com.m3sv.plainupnp.upnp.util
 
 import com.m3sv.plainupnp.upnp.mediacontainers.BaseContainer
+import org.fourthline.cling.support.model.DIDLObject
 import org.fourthline.cling.support.model.PersonWithRole
 import org.fourthline.cling.support.model.Res
 import org.fourthline.cling.support.model.item.ImageItem
@@ -16,7 +17,7 @@ fun BaseContainer.addImageItem(
     width: Long,
     height: Long,
     size: Long,
-) {
+): DIDLObject {
     val (type, subtype) = mime.split('/')
 
     val res = Res(
@@ -27,13 +28,15 @@ fun BaseContainer.addImageItem(
         setResolution(width.toInt(), height.toInt())
     }
 
-    addItem(ImageItem(
+    val imageItem = ImageItem(
         id,
         rawId,
         name,
         "",
         res
-    ))
+    )
+    addItem(imageItem)
+    return imageItem
 }
 
 fun BaseContainer.addVideoItem(
@@ -45,7 +48,7 @@ fun BaseContainer.addVideoItem(
     height: Long,
     size: Long,
     duration: Long,
-) {
+): DIDLObject {
     val (type, subtype) = mime.split('/')
 
     val res = Res(
@@ -59,7 +62,9 @@ fun BaseContainer.addVideoItem(
 
     }
 
-    addItem(VideoItem(id, rawId, name, "", res))
+    val videoItem = VideoItem(id, rawId, name, "", res)
+    addItem(videoItem)
+    return videoItem
 }
 
 fun BaseContainer.addAudioItem(
@@ -73,7 +78,7 @@ fun BaseContainer.addAudioItem(
     duration: Long,
     album: String,
     creator: String,
-) {
+): DIDLObject {
     val (type, subtype) = mime.split('/')
 
     val res = Res(
@@ -86,15 +91,18 @@ fun BaseContainer.addAudioItem(
         res.setResolution(width.toInt(), height.toInt())
     }
 
-    addItem(
-        MusicTrack(
-            id,
-            rawId,
-            name,
-            creator,
-            album,
-            PersonWithRole(creator, "Performer"),
-            res
-        )
+    val musicTrack = MusicTrack(
+        id,
+        rawId,
+        name,
+        creator,
+        album,
+        PersonWithRole(creator, "Performer"),
+        res
     )
+    addItem(
+        musicTrack
+    )
+    return musicTrack
 }
+

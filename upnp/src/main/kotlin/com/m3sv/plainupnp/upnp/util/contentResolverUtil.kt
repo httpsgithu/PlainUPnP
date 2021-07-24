@@ -5,7 +5,7 @@ import android.net.Uri
 import android.provider.MediaStore
 import com.m3sv.plainupnp.upnp.UpnpContentRepositoryImpl
 
-fun ContentResolver.queryImages(
+inline fun ContentResolver.queryImages(
     uri: Uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
     block: (
         id: String,
@@ -43,7 +43,7 @@ fun ContentResolver.queryImages(
     }
 }
 
-private val IMAGE_COLUMNS = arrayOf(
+val IMAGE_COLUMNS = arrayOf(
     MediaStore.Images.Media._ID,
     MediaStore.Images.Media.DISPLAY_NAME,
     MediaStore.Images.Media.MIME_TYPE,
@@ -52,7 +52,7 @@ private val IMAGE_COLUMNS = arrayOf(
     MediaStore.Images.Media.WIDTH
 )
 
-fun ContentResolver.queryVideos(
+inline fun ContentResolver.queryVideos(
     uri: Uri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
     block: (
         id: String,
@@ -98,7 +98,7 @@ fun ContentResolver.queryVideos(
     }
 }
 
-private val VIDEO_COLUMNS = arrayOf(
+val VIDEO_COLUMNS = arrayOf(
     MediaStore.Video.Media._ID,
     MediaStore.Video.Media.DISPLAY_NAME,
     MediaStore.Video.Media.ARTIST,
@@ -109,7 +109,7 @@ private val VIDEO_COLUMNS = arrayOf(
     MediaStore.Video.Media.WIDTH
 )
 
-fun ContentResolver.queryAudio(
+inline fun ContentResolver.queryAudio(
     uri: Uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
     block: (
         id: String,
@@ -153,7 +153,7 @@ fun ContentResolver.queryAudio(
     }
 }
 
-private val AUDIO_COLUMNS = arrayOf(
+val AUDIO_COLUMNS = arrayOf(
     MediaStore.Audio.Media._ID,
     MediaStore.Audio.Media.DISPLAY_NAME,
     MediaStore.Audio.Media.ARTIST,

@@ -5,7 +5,8 @@ import android.content.ContentUris
 import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
-import com.m3sv.plainupnp.core.persistence.PlainDb
+import com.m3sv.plainupnp.ContentModel
+import com.m3sv.plainupnp.ContentRepository
 import com.m3sv.plainupnp.logging.Log
 import com.m3sv.plainupnp.upnp.UpnpContentRepositoryImpl.Companion.AUDIO_PREFIX
 import com.m3sv.plainupnp.upnp.UpnpContentRepositoryImpl.Companion.IMAGE_PREFIX
@@ -28,8 +29,8 @@ import javax.inject.Singleton
 @Singleton
 class MediaServer @Inject constructor(
     private val application: Application,
-    private val database: PlainDb,
-    private val log: Log
+    private val log: Log,
+    private val contentRepository: ContentRepository,
 ) : SimpleInputStreamServer(null, PORT, listOf(), true) {
 
     private val serverScope = CoroutineScope(Executors.newFixedThreadPool(8).asCoroutineDispatcher())
@@ -67,7 +68,7 @@ class MediaServer @Inject constructor(
         Timber.i("Headers: ${session.headers}")
 
         serveFile(
-            obj.fileUri.toString(),
+            obj.id.toString(),
             session.headers,
             obj.inputStream,
             obj.mime
@@ -97,20 +98,21 @@ class MediaServer @Inject constructor(
             // Remove extension
             val id = uri.replace("/", "").split(".").first()
             val mediaId = id.substring(2)
+
             return when {
-                id.startsWith(AUDIO_PREFIX) -> handleGeneric(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, mediaId)
-                id.startsWith(VIDEO_PREFIX) -> handleGeneric(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, mediaId)
-                id.startsWith(IMAGE_PREFIX) -> handleGeneric(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, mediaId)
-                id.startsWith(TREE_PREFIX) -> handleTree(
-                    Uri.parse(
-                        database
-                            .fileCacheQueries
-                            .selectById(mediaId.toLong())
-                            .executeAsOneOrNull()
-                            ?.uri
-                            ?: error("Not found")
-                    ), mediaId
+                id.startsWith(AUDIO_PREFIX) -> getContainerResponse(
+                    MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+                    mediaId
                 )
+                id.startsWith(VIDEO_PREFIX) -> getContainerResponse(
+                    MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
+                    mediaId
+                )
+                id.startsWith(IMAGE_PREFIX) -> getContainerResponse(
+                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                    mediaId
+                )
+                id.startsWith(TREE_PREFIX) -> getTreeResponse(mediaId)
                 else -> error("Unknown content type")
             }
 
@@ -121,12 +123,18 @@ class MediaServer @Inject constructor(
         throw InvalidIdentifierException("$uri was not found in media database").apply(log::e)
     }
 
-    private fun handleGeneric(contentUri: Uri, mediaId: String): ServerObject {
-        val columns =
-            arrayOf(
-                MediaStore.MediaColumns._ID,
-                MediaStore.MediaColumns.MIME_TYPE
-            )
+    private fun getTreeResponse(mediaId: String): ServerObject {
+        val model: ContentModel = contentRepository.contentCache[mediaId.toLong()] ?: error("Not found")
+        val fileInputStream =
+            application.contentResolver.openInputStream(model.uri) ?: error("Failed to open file input stream")
+        return ServerObject(mediaId, model.mimeType, fileInputStream)
+    }
+
+    private fun getContainerResponse(contentUri: Uri, mediaId: String): ServerObject {
+        val columns = arrayOf(
+            MediaStore.MediaColumns._ID,
+            MediaStore.MediaColumns.MIME_TYPE
+        )
 
         val whereVal = arrayOf(mediaId)
 
@@ -147,7 +155,7 @@ class MediaServer @Inject constructor(
                     val inputStream = application.contentResolver.openInputStream(fileUri)
 
                     return ServerObject(
-                        fileUri,
+                        fileUri.toString(),
                         mime,
                         inputStream!!
                     )
@@ -156,49 +164,12 @@ class MediaServer @Inject constructor(
 
         error("Object with id $mediaId not found")
     }
-
-    private fun handleTree(contentUri: Uri, mediaId: String): ServerObject {
-        val columns =
-            arrayOf(
-                MediaStore.MediaColumns._ID,
-                MediaStore.MediaColumns.MIME_TYPE
-            )
-
-        application
-            .contentResolver
-            .query(
-                contentUri,
-                columns,
-                null,
-                null,
-                null
-            )?.use { cursor ->
-                if (cursor.moveToFirst()) {
-                    val fileId =
-                        cursor.getLong(cursor.getColumnIndex(MediaStore.MediaColumns._ID))
-
-                    val mime =
-                        cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.MIME_TYPE))
-
-                    val fileUri = ContentUris.withAppendedId(contentUri, fileId)
-                    val inputStream = application.contentResolver.openInputStream(fileUri)
-
-                    return ServerObject(
-                        fileUri,
-                        mime,
-                        inputStream!!
-                    )
-                }
-            }
-
-        error("Object with id $mediaId not found")
-    }
-
-    data class ServerObject(val fileUri: Uri, val mime: String, val inputStream: InputStream)
 
     companion object {
         private const val WHERE_CLAUSE = MediaStore.MediaColumns._ID + "=?"
     }
+
+    data class ServerObject(val id: String, val mime: String, val inputStream: InputStream)
 }
 
 
