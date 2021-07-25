@@ -8,7 +8,7 @@ import com.m3sv.plainupnp.data.upnp.UpnpDevice
 import com.m3sv.plainupnp.data.upnp.UpnpDeviceEvent
 import com.m3sv.plainupnp.upnp.CDevice
 import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.channels.sendBlocking
+import kotlinx.coroutines.channels.trySendBlocking
 import kotlinx.coroutines.flow.callbackFlow
 import org.fourthline.cling.model.meta.LocalDevice
 import timber.log.Timber
@@ -77,7 +77,7 @@ class ContentDirectoryDiscoveryObservable @Inject constructor(
 
             private fun sendContentDirectories() {
                 if (!isClosedForSend)
-                    sendBlocking(currentContentDirectories)
+                    trySendBlocking(currentContentDirectories)
             }
         }
 

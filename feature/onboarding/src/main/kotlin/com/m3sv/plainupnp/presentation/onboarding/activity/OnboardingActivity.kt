@@ -23,9 +23,12 @@ import com.m3sv.plainupnp.applicationmode.SelectApplicationModeScreen
 import com.m3sv.plainupnp.common.util.pass
 import com.m3sv.plainupnp.compose.util.AppTheme
 import com.m3sv.plainupnp.data.upnp.UriWrapper
-import com.m3sv.plainupnp.presentation.onboarding.*
+import com.m3sv.plainupnp.presentation.onboarding.OnboardingManager
+import com.m3sv.plainupnp.presentation.onboarding.OnboardingScreen
+import com.m3sv.plainupnp.presentation.onboarding.OnboardingViewModel
 import com.m3sv.plainupnp.presentation.onboarding.R
 import com.m3sv.plainupnp.presentation.onboarding.screen.GreetingScreen
+import com.m3sv.plainupnp.presentation.onboarding.screen.SelectFoldersScreen
 import com.m3sv.plainupnp.presentation.onboarding.screen.SelectPreconfiguredContainersScreen
 import com.m3sv.plainupnp.presentation.onboarding.screen.StoragePermissionScreen
 import com.m3sv.plainupnp.presentation.onboarding.selecttheme.SelectThemeScreen

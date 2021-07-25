@@ -13,7 +13,7 @@ import com.m3sv.plainupnp.ThemeManager
 import com.m3sv.plainupnp.compose.util.AppTheme
 import com.m3sv.plainupnp.data.upnp.UriWrapper
 import com.m3sv.plainupnp.presentation.onboarding.OnboardingViewModel
-import com.m3sv.plainupnp.presentation.onboarding.SelectFoldersScreen
+import com.m3sv.plainupnp.presentation.onboarding.screen.SelectFoldersScreen
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 

@@ -4,7 +4,6 @@ package com.m3sv.plainupnp.upnp.discovery.device
 import com.m3sv.plainupnp.data.upnp.*
 import com.m3sv.plainupnp.upnp.resourceproviders.UpnpResourceProvider
 import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.channels.sendBlocking
 import kotlinx.coroutines.channels.trySendBlocking
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -82,7 +81,7 @@ class RendererDiscoveryObservable @Inject constructor(
         }
 
         rendererDiscovery.addObserver(callback)
-        sendBlocking(currentRenderers)
+        trySendBlocking(currentRenderers)
         awaitClose { rendererDiscovery.removeObserver(callback) }
     }
 

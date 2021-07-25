@@ -1,4 +1,4 @@
-package com.m3sv.plainupnp.presentation.onboarding
+package com.m3sv.plainupnp.presentation.onboarding.screen
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import com.m3sv.plainupnp.compose.util.AppTheme
 import com.m3sv.plainupnp.compose.widgets.*
 import com.m3sv.plainupnp.data.upnp.UriWrapper
+import com.m3sv.plainupnp.presentation.onboarding.R
 
 
 @Composable
