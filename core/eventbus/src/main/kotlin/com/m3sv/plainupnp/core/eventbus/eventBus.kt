@@ -4,9 +4,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.filterIsInstance
 
-abstract class Event(
-    val data: Any?,
-)
+abstract class Event(val data: Any?)
 
 private val eventChannel: MutableSharedFlow<Event> = MutableSharedFlow()
 
