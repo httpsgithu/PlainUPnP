@@ -77,7 +77,6 @@ android {
 
 dependencies {
     implementation project(':common')
-    implementation project(':persistence')
     implementation project(':core:eventbus')
     implementation project(':core:resources')
     implementation project(':feature:onboarding')

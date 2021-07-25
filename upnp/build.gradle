@@ -27,5 +27,4 @@ dependencies {
 
     implementation project(":common")
     implementation project(':core:eventbus')
-    implementation project(':persistence')
 }

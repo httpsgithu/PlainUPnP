@@ -8,7 +8,6 @@ include(
     ":feature:onboarding",
     ":feature:selectcontentdirectory",
     ":feature:settings",
-    ":persistence",
     ":upnp",
 )
 
