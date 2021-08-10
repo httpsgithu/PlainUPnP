@@ -14,6 +14,7 @@ import com.m3sv.plainupnp.applicationmode.SelectApplicationModeScreen
 import com.m3sv.plainupnp.common.preferences.PreferencesRepository
 import com.m3sv.plainupnp.common.util.asApplicationMode
 import com.m3sv.plainupnp.compose.util.AppTheme
+import com.m3sv.plainupnp.util.subscribeForFinish
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -29,6 +30,7 @@ class SelectApplicationModeActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        subscribeForFinish()
         setContent {
             var modeChanged by remember { mutableStateOf(false) }
 

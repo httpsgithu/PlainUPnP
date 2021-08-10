@@ -35,6 +35,7 @@ dependencies {
     api "com.google.protobuf:protobuf-javalite:3.10.0"
 
     implementation project(':core:resources')
+    implementation project(':core:eventbus')
 
     kapt(libs.hilt.compiler)
 

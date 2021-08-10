@@ -34,6 +34,7 @@ import com.m3sv.plainupnp.compose.widgets.OneToolbar
 import com.m3sv.plainupnp.presentation.onboarding.activity.ConfigureFolderActivity
 import com.m3sv.plainupnp.presentation.onboarding.selecttheme.SelectThemeActivity
 import com.m3sv.plainupnp.presentation.settings.ratehandler.RateHandler
+import com.m3sv.plainupnp.util.subscribeForFinish
 import com.m3sv.selectcontentdirectory.SelectApplicationModeActivity
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
@@ -54,6 +55,7 @@ class SettingsActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        subscribeForFinish()
         setContent {
             val preferences by preferencesRepository.preferences.collectAsState()
             val currentTheme by themeManager.collectTheme()

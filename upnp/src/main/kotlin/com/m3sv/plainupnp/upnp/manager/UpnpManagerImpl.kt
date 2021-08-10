@@ -449,7 +449,12 @@ class UpnpManagerImpl @Inject constructor(
                 return Result.Error
             }
 
-            currentContent.value = upnpRepository.browse(service, folderId)
+            try {
+                currentContent.value = upnpRepository.browse(service, folderId)
+            } catch (e: Exception) {
+                return Result.Error
+            }
+
             contentCache.putAll(currentContent.value.associateBy { it.id })
             val currentFolderName = folderName.replace(UpnpContentRepositoryImpl.USER_DEFINED_PREFIX, "")
 

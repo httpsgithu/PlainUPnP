@@ -11,16 +11,27 @@ import com.m3sv.plainupnp.upnp.PlainUpnpServiceConfiguration
 import com.m3sv.plainupnp.upnp.R
 import com.m3sv.plainupnp.upnp.UpnpContentRepositoryImpl
 import com.m3sv.plainupnp.upnp.resourceproviders.LocalServiceResourceProvider
-import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import org.fourthline.cling.UpnpService
+import org.fourthline.cling.UpnpServiceConfiguration
 import org.fourthline.cling.binding.annotations.AnnotationLocalServiceBinder
+import org.fourthline.cling.controlpoint.ControlPoint
+import org.fourthline.cling.controlpoint.ControlPointImpl
 import org.fourthline.cling.model.DefaultServiceManager
 import org.fourthline.cling.model.meta.*
 import org.fourthline.cling.model.types.UDADeviceType
+import org.fourthline.cling.protocol.ProtocolFactory
+import org.fourthline.cling.protocol.ProtocolFactoryImpl
+import org.fourthline.cling.registry.Registry
+import org.fourthline.cling.registry.RegistryImpl
+import org.fourthline.cling.transport.Router
+import org.fourthline.cling.transport.RouterException
+import org.seamless.util.Exceptions
 import timber.log.Timber
+import java.util.concurrent.RejectedExecutionException
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -31,13 +42,21 @@ class AndroidUpnpServiceImpl @Inject constructor(
     contentRepository: UpnpContentRepositoryImpl,
     private val log: Log,
     private val preferencesRepository: PreferencesRepository,
-) : UpnpServiceImpl(application, PlainUpnpServiceConfiguration(), log) {
+) : UpnpService {
 
-    private val scope = MainScope()
-
-    private val localDevice by lazy {
-        getLocalDevice(resourceProvider, application, contentRepository)
+    private val _protocolFactory: ProtocolFactory by lazy { ProtocolFactoryImpl(this) }
+    private val _registry: Registry by lazy { RegistryImpl(this) }
+    private val _controlPoint: ControlPoint by lazy {
+        ControlPointImpl(configuration, _protocolFactory, _registry)
     }
+
+    private val _configuration = PlainUpnpServiceConfiguration()
+
+    private val router: Router = AndroidRouter(configuration, _protocolFactory, application)
+
+    private val scope = GlobalScope
+
+    override fun getProtocolFactory(): ProtocolFactory = _protocolFactory
 
     init {
         scope.launch {
@@ -58,26 +77,66 @@ class AndroidUpnpServiceImpl @Inject constructor(
         }
     }
 
+    fun start() {
+        Timber.i(">>> Starting UPnP service...")
+
+        try {
+            router.enable()
+        } catch (var7: RouterException) {
+            throw RuntimeException("Enabling network router failed: $var7", var7)
+        }
+
+        Timber.i("<<< UPnP service started successfully")
+    }
+
+    override fun getConfiguration(): UpnpServiceConfiguration = _configuration
+
+    override fun getControlPoint(): ControlPoint = _controlPoint
+
+    override fun getRegistry(): Registry = _registry
+
+    override fun getRouter(): Router = router
+
+    @Synchronized
+    override fun shutdown() {
+        Timber.i(">>> Shutting down UPnP service...")
+        shutdownRegistry()
+        shutdownRouter()
+        shutdownConfiguration()
+        Timber.i("<<< UPnP service shutdown completed")
+    }
+
+
+    private val localDevice by lazy {
+        getLocalDevice(resourceProvider, application, contentRepository)
+    }
+
     fun resume() {
         Timber.d("Resuming upnp service")
-        try {
-            if (isStreaming()) {
-                registry.addDevice(localDevice)
-            }
-            controlPoint.search()
-        } catch (e: Exception) {
-            log.e(e)
+        scope.launch {
+            flow<Unit> {
+                if (isStreaming()) {
+                    registry.addDevice(localDevice)
+                }
+                controlPoint.search()
+
+            }.retry(10) { e ->
+                log.e(e)
+                (e is RejectedExecutionException).also { if (it) delay(1000) }
+            }.catch { log.e(it) }.collect()
         }
     }
 
     fun pause() {
         Timber.d("Pause upnp service")
 
-        if (isStreaming()) {
-            try {
-                registry.removeDevice(localDevice)
-            } catch (e: Exception) {
-                log.e(e)
+        scope.launch {
+            if (isStreaming()) {
+                try {
+                    registry.removeDevice(localDevice)
+                } catch (e: Exception) {
+                    log.e(e)
+                }
             }
         }
     }
@@ -88,11 +147,6 @@ class AndroidUpnpServiceImpl @Inject constructor(
             .value
             .applicationMode
             ?.asApplicationMode() == ApplicationMode.Streaming
-
-    override fun shutdown() {
-        (router as AndroidRouter).unregisterBroadcastReceiver()
-        super.shutdown()
-    }
 
     private fun getLocalDevice(
         serviceResourceProvider: LocalServiceResourceProvider,
@@ -159,6 +213,28 @@ class AndroidUpnpServiceImpl @Inject constructor(
         }
 
         return contentDirectoryService
+    }
+
+
+    private fun shutdownRegistry() {
+        registry.shutdown()
+    }
+
+    private fun shutdownRouter() {
+        try {
+            getRouter().shutdown()
+        } catch (var3: RouterException) {
+            val cause = Exceptions.unwrap(var3)
+            if (cause is InterruptedException) {
+                log.e(cause, "Router shutdown was interrupted: ${var3.stackTrace}")
+            } else {
+                log.e(cause, "Router error on shutdown: $var3")
+            }
+        }
+    }
+
+    private fun shutdownConfiguration() {
+        configuration.shutdown()
     }
 }
 

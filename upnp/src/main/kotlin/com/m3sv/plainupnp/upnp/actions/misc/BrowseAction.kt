@@ -85,8 +85,8 @@ class BrowseAction @Inject constructor(controlPoint: ControlPoint) :
                 operation: UpnpResponse,
                 defaultMsg: String,
             ) {
-                Timber.w("Fail to browse! $defaultMsg")
-                continuation.resume(listOf())
+                Timber.w("Failed to browse! $defaultMsg")
+                error("Failed to browse!")
             }
         })
     }

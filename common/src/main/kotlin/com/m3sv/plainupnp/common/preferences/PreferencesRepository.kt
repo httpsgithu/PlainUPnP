@@ -20,7 +20,6 @@ import javax.inject.Singleton
 
 @Singleton
 class PreferencesRepository @Inject constructor(private val context: Application) {
-
     private val scope = CoroutineScope(Dispatchers.IO)
 
     private val Context.preferencesStore: DataStore<Preferences> by dataStore(

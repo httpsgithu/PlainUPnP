@@ -42,13 +42,12 @@ import com.m3sv.plainupnp.R
 import com.m3sv.plainupnp.ThemeManager
 import com.m3sv.plainupnp.compose.util.AppTheme
 import com.m3sv.plainupnp.compose.widgets.OneToolbar
-import com.m3sv.plainupnp.core.eventbus.events.ExitApplication
-import com.m3sv.plainupnp.core.eventbus.subscribe
 import com.m3sv.plainupnp.data.upnp.UpnpRendererState
 import com.m3sv.plainupnp.presentation.SpinnerItem
 import com.m3sv.plainupnp.presentation.settings.SettingsActivity
 import com.m3sv.plainupnp.upnp.UpnpContentRepositoryImpl.Companion.USER_DEFINED_PREFIX
 import com.m3sv.plainupnp.upnp.folder.Folder
+import com.m3sv.plainupnp.util.subscribeForFinish
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
@@ -73,6 +72,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        subscribeForFinish()
         setContent {
             var selectedRenderer by rememberSaveable { mutableStateOf("Stream to") }
             var showFilter by rememberSaveable { mutableStateOf(false) }
@@ -211,10 +211,6 @@ class MainActivity : ComponentActivity() {
 
         lifecycleScope.launchWhenCreated {
             viewModel.isConnectedToRenderer.collect { isConnectedToRenderer = it }
-        }
-
-        lifecycleScope.launchWhenCreated {
-            subscribe<ExitApplication>().collect { finishAffinity() }
         }
     }
 

@@ -1,6 +1,8 @@
 package com.m3sv.plainupnp.di
 
 import com.m3sv.plainupnp.ContentRepository
+import com.m3sv.plainupnp.server.ServerManager
+import com.m3sv.plainupnp.server.ServerManagerImpl
 import com.m3sv.plainupnp.upnp.UpnpContentRepositoryImpl
 import com.m3sv.plainupnp.upnp.android.AndroidUpnpServiceImpl
 import dagger.Binds
@@ -18,4 +20,7 @@ abstract class BinderModule {
 
     @Binds
     abstract fun bindContentRepository(contentRepositoryImpl: UpnpContentRepositoryImpl): ContentRepository
+
+    @Binds
+    abstract fun bindServerManager(serverManager: ServerManagerImpl): ServerManager
 }

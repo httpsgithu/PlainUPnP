@@ -21,13 +21,13 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import com.m3sv.plainupnp.Router
 import com.m3sv.plainupnp.ThemeManager
-import com.m3sv.plainupnp.common.util.pass
 import com.m3sv.plainupnp.compose.util.AppTheme
 import com.m3sv.plainupnp.compose.widgets.OnePane
 import com.m3sv.plainupnp.compose.widgets.OneTitle
 import com.m3sv.plainupnp.compose.widgets.OneToolbar
 import com.m3sv.plainupnp.data.upnp.DeviceDisplay
 import com.m3sv.plainupnp.upnp.manager.Result
+import com.m3sv.plainupnp.util.subscribeForFinish
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -44,8 +44,7 @@ class SelectContentDirectoryActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        initUpnpService()
-
+        subscribeForFinish()
         setContent {
             val contentDirectories by viewModel.state.collectAsState()
             val currentTheme by themeManager.collectTheme()
@@ -141,11 +140,6 @@ class SelectContentDirectoryActivity : ComponentActivity() {
                 }
             }
         }
-    }
-
-    private fun initUpnpService() {
-        val viewModel: SelectContentDirectoryPresenter by viewModels()
-        viewModel.pass
     }
 
     private fun handleGearClick() {

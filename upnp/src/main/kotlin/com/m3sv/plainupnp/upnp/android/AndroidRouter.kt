@@ -28,7 +28,6 @@ import com.m3sv.plainupnp.upnp.android.NetworkUtils.isEthernet
 import com.m3sv.plainupnp.upnp.android.NetworkUtils.isMobile
 import com.m3sv.plainupnp.upnp.android.NetworkUtils.isWifi
 import org.fourthline.cling.UpnpServiceConfiguration
-import org.fourthline.cling.model.ModelUtil
 import org.fourthline.cling.protocol.ProtocolFactory
 import org.fourthline.cling.transport.Router
 import org.fourthline.cling.transport.RouterException
@@ -59,12 +58,8 @@ class AndroidRouter(
 
     init {
         networkInfo = getConnectedNetworkInfo(context)
-
-        // Only register for network connectivity changes if we are not running on emulator
-        if (!ModelUtil.ANDROID_EMULATOR) {
-            broadcastReceiver = ConnectivityBroadcastReceiver()
-            context.registerReceiver(broadcastReceiver, IntentFilter("android.net.conn.CONNECTIVITY_CHANGE"))
-        }
+        broadcastReceiver = ConnectivityBroadcastReceiver()
+        context.registerReceiver(broadcastReceiver, IntentFilter("android.net.conn.CONNECTIVITY_CHANGE"))
     }
 
     override fun getLockTimeoutMillis(): Int = 15000
@@ -117,7 +112,7 @@ class AndroidRouter(
     private val isEthernet: Boolean
         get() = isEthernet(networkInfo)
 
-    fun unregisterBroadcastReceiver() {
+    private fun unregisterBroadcastReceiver() {
         if (broadcastReceiver != null) {
             context.unregisterReceiver(broadcastReceiver)
             broadcastReceiver = null
@@ -179,23 +174,31 @@ class AndroidRouter(
      */
     @Throws(RouterException::class)
     private fun onNetworkTypeChange(oldNetwork: NetworkInfo?, newNetwork: NetworkInfo?) {
-        log.info(String.format("Network type changed %s => %s",
-            if (oldNetwork == null) "" else oldNetwork.typeName,
-            if (newNetwork == null) "NONE" else newNetwork.typeName))
+        log.info(
+            String.format(
+                "Network type changed %s => %s",
+                if (oldNetwork == null) "" else oldNetwork.typeName,
+                if (newNetwork == null) "NONE" else newNetwork.typeName
+            )
+        )
         if (disable()) {
-            log.info(String.format(
-                "Disabled router on network type change (old network: %s)",
-                if (oldNetwork == null) "NONE" else oldNetwork.typeName
-            ))
+            log.info(
+                String.format(
+                    "Disabled router on network type change (old network: %s)",
+                    if (oldNetwork == null) "NONE" else oldNetwork.typeName
+                )
+            )
         }
         networkInfo = newNetwork
         if (enable()) {
             // Can return false (via earlier InitializationException thrown by NetworkAddressFactory) if
             // no bindable network address found!
-            log.info(String.format(
-                "Enabled router on network type change (new network: %s)",
-                if (newNetwork == null) "NONE" else newNetwork.typeName
-            ))
+            log.info(
+                String.format(
+                    "Enabled router on network type change (new network: %s)",
+                    if (newNetwork == null) "NONE" else newNetwork.typeName
+                )
+            )
         }
     }
 
@@ -233,10 +236,12 @@ class AndroidRouter(
                         } catch (e: InterruptedException) {
                             return
                         }
-                        log.warning(String.format(
-                            "%s => NONE network transition, waiting for new network... retry #%d",
-                            oldInfo.typeName, i
-                        ))
+                        log.warning(
+                            String.format(
+                                "%s => NONE network transition, waiting for new network... retry #%d",
+                                oldInfo.typeName, i
+                            )
+                        )
                         newNetworkInfo = getConnectedNetworkInfo(context)
                         if (newNetworkInfo != null) break
                     }
