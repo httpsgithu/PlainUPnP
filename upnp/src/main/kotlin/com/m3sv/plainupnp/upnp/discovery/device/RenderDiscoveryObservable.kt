@@ -1,8 +1,9 @@
 package com.m3sv.plainupnp.upnp.discovery.device
 
 
+import android.app.Application
+import com.m3sv.plainupnp.common.R
 import com.m3sv.plainupnp.data.upnp.*
-import com.m3sv.plainupnp.upnp.resourceproviders.UpnpResourceProvider
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.channels.trySendBlocking
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,13 +14,13 @@ import javax.inject.Inject
 
 
 class RendererDiscoveryObservable @Inject constructor(
+    application: Application,
     private val rendererDiscovery: RendererDiscovery,
-    upnpResourceProvider: UpnpResourceProvider
 ) {
     private var selectedRenderer: MutableStateFlow<UpnpDevice?> = MutableStateFlow(null)
 
     private val renderers =
-        LinkedHashSet<DeviceDisplay>(listOf(DeviceDisplay(LocalDevice(upnpResourceProvider.playLocally))))
+        LinkedHashSet<DeviceDisplay>(listOf(DeviceDisplay(LocalDevice(application.getString(R.string.play_locally)))))
 
     val currentRenderers: List<DeviceDisplay>
         get() = renderers.toList()

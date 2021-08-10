@@ -10,7 +10,7 @@ import com.m3sv.plainupnp.core.eventbus.post
 import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 
-class PlainUpnpAndroidService : Service() {
+class ForegroundNotificationService : Service() {
 
     @Inject
     override fun onBind(intent: Intent?): IBinder? = null
@@ -43,7 +43,7 @@ class PlainUpnpAndroidService : Service() {
 
     companion object {
         fun start(context: Context) {
-            val intent = Intent(context, PlainUpnpAndroidService::class.java).apply {
+            val intent = Intent(context, ForegroundNotificationService::class.java).apply {
                 action = START_SERVICE
             }
 

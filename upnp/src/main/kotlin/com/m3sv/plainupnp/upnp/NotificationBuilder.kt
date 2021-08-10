@@ -42,7 +42,7 @@ class NotificationBuilder(private val context: Context) {
                     21,
                     Intent(
                         context,
-                        PlainUpnpAndroidService::class.java
+                        ForegroundNotificationService::class.java
                     ).apply {
                         action = ACTION_EXIT
                     },

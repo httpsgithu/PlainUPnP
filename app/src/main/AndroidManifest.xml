@@ -49,7 +49,7 @@
             android:resizeableActivity="true" />
 
         <service
-            android:name=".upnp.PlainUpnpAndroidService"
+            android:name=".upnp.ForegroundNotificationService"
             android:exported="false"
             android:stopWithTask="true" />
     </application>

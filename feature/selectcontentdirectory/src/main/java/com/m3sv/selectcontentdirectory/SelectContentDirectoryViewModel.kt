@@ -6,7 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.m3sv.plainupnp.data.upnp.DeviceDisplay
 import com.m3sv.plainupnp.data.upnp.UpnpDevice
 import com.m3sv.plainupnp.server.ServerManager
-import com.m3sv.plainupnp.upnp.PlainUpnpAndroidService
+import com.m3sv.plainupnp.upnp.ForegroundNotificationService
 import com.m3sv.plainupnp.upnp.manager.Result
 import com.m3sv.plainupnp.upnp.manager.UpnpManager
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -24,7 +24,7 @@ class SelectContentDirectoryViewModel @Inject constructor(
 ) : ViewModel() {
 
     init {
-        PlainUpnpAndroidService.start(application)
+        ForegroundNotificationService.start(application)
         serverManager.start()
         serverManager.resume()
     }
