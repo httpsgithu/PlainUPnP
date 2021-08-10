@@ -7,11 +7,10 @@ import com.m3sv.plainupnp.core.eventbus.subscribe
 import com.m3sv.plainupnp.upnp.android.AndroidUpnpServiceImpl
 import com.m3sv.plainupnp.upnp.server.MediaServer
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import org.fourthline.cling.UpnpService
@@ -20,6 +19,7 @@ import java.util.concurrent.Executors
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.concurrent.thread
+import kotlin.system.exitProcess
 
 @Singleton
 class ServerManagerImpl @Inject constructor(
@@ -33,10 +33,8 @@ class ServerManagerImpl @Inject constructor(
     private val serverState: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
     init {
-        scope.launch {
-            subscribe<ExitApplication>()
-                .flowOn(Dispatchers.Main)
-                .collect { shutdown() }
+        MainScope().launch {
+            subscribe<ExitApplication>().collect { shutdown() }
         }
 
         scope.launch {
@@ -88,6 +86,7 @@ class ServerManagerImpl @Inject constructor(
         thread {
             upnpService.shutdown()
             Timber.d("Shutdown upnpService")
+            exitProcess(0)
         }
     }
 }

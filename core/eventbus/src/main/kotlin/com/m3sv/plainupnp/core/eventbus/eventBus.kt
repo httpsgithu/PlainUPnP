@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.filterIsInstance
 
 abstract class Event(val data: Any?)
 
-private val eventChannel: MutableSharedFlow<Event> = MutableSharedFlow()
+private val eventChannel: MutableSharedFlow<Event> = MutableSharedFlow(extraBufferCapacity = 1)
 
 val eventFlow: Flow<Event> = eventChannel
 

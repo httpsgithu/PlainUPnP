@@ -7,7 +7,8 @@ import android.os.IBinder
 import androidx.core.content.ContextCompat
 import com.m3sv.plainupnp.core.eventbus.events.ExitApplication
 import com.m3sv.plainupnp.core.eventbus.post
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class ForegroundNotificationService : Service() {
@@ -17,11 +18,7 @@ class ForegroundNotificationService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
-            NotificationBuilder.ACTION_EXIT -> {
-                stopForeground(true)
-                finishApplication()
-                stopSelf(startId)
-            }
+            NotificationBuilder.ACTION_EXIT -> finishApplication()
 
             START_SERVICE -> startForeground(
                 NotificationBuilder.SERVER_NOTIFICATION,
@@ -33,12 +30,14 @@ class ForegroundNotificationService : Service() {
     }
 
     override fun onTaskRemoved(rootIntent: Intent?) {
-        super.onTaskRemoved(rootIntent)
         finishApplication()
+        super.onTaskRemoved(rootIntent)
     }
 
     private fun finishApplication() {
-        runBlocking { post(ExitApplication) }
+        MainScope().launch { post(ExitApplication) }
+        stopForeground(false)
+        stopSelf()
     }
 
     companion object {

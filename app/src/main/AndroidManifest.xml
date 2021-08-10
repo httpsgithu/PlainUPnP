@@ -50,7 +50,6 @@
 
         <service
             android:name=".upnp.ForegroundNotificationService"
-            android:exported="false"
-            android:stopWithTask="true" />
+            android:exported="false" />
     </application>
 </manifest>
