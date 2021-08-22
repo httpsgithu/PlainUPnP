@@ -1,5 +1,7 @@
 package com.m3sv.plainupnp.upnp.di
 
+import com.m3sv.plainupnp.interfaces.LifecycleManager
+import com.m3sv.plainupnp.upnp.cleanup.DefaultLifecycleManager
 import com.m3sv.plainupnp.upnp.manager.UpnpManager
 import com.m3sv.plainupnp.upnp.manager.UpnpManagerImpl
 import com.m3sv.plainupnp.upnp.volume.UpnpVolumeManager
@@ -23,6 +25,10 @@ abstract class UpnpBindersModule {
     @Binds
     @Singleton
     abstract fun bindUpnpManager(upnpManagerImpl: UpnpManagerImpl): UpnpManager
+
+    @Binds
+    @Singleton
+    abstract fun bindLifecycleManager(defaultLifecycleManager: DefaultLifecycleManager): LifecycleManager
 
     companion object {
         @Provides

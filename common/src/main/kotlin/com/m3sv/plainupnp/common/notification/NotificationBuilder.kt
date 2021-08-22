@@ -1,4 +1,4 @@
-package com.m3sv.plainupnp.upnp
+package com.m3sv.plainupnp.common.notification
 
 import android.app.Notification
 import android.app.NotificationChannel
@@ -14,6 +14,7 @@ import android.text.style.StyleSpan
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
+import com.m3sv.plainupnp.common.R
 
 class NotificationBuilder(private val context: Context) {
 

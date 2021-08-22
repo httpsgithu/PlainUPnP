@@ -51,10 +51,4 @@ class UpnpRepository @Inject constructor(
 
     fun setUriFlow(service: Service<*, *>, uri: String, metadata: TrackMetadata): Flow<Unit> =
         setUriAction.setUri(service, uri, metadata)
-
-    suspend fun getTransportInfo(service: Service<*, *>): TransportInfo? = getTransportInfoAction(service)
-
-    suspend fun getPositionInfo(service: Service<*, *>) = getPositionInfoAction(service)
-
-
 }

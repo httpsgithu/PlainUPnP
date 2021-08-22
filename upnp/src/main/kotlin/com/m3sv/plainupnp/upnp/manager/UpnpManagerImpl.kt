@@ -28,8 +28,6 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.fourthline.cling.model.meta.Service
 import org.fourthline.cling.model.types.UDAServiceType
-import org.fourthline.cling.support.model.PositionInfo
-import org.fourthline.cling.support.model.TransportInfo
 import org.fourthline.cling.support.model.TransportState
 import org.fourthline.cling.support.model.item.*
 import timber.log.Timber
@@ -102,12 +100,9 @@ class UpnpManagerImpl @Inject constructor(
                     while (isActive) {
                         delay(500)
 
-                        val transportInfoAsync = async { upnpRepository.getTransportInfo(service) }
-                        val positionInfoAsync = async { upnpRepository.getPositionInfo(service) }
-
-                        combineResults(
-                            transportInfoAsync.await(),
-                            positionInfoAsync.await()
+                        combine(
+                            upnpRepository.getTransportInfoFlow(service),
+                            upnpRepository.getPositionInfoFlow(service)
                         ) { transportInfo, positionInfo ->
                             remotePaused =
                                 transportInfo.currentTransportState == TransportState.PAUSED_PLAYBACK
@@ -135,7 +130,7 @@ class UpnpManagerImpl @Inject constructor(
                                 upnpInnerStateChannel.emit(UpnpRendererState.Empty)
                                 cancel()
                             }
-                        }
+                        }.collect()
                     }
                 }
             }.collect()
@@ -155,19 +150,6 @@ class UpnpManagerImpl @Inject constructor(
                 }
             }
         }
-    }
-
-    private inline fun combineResults(
-        transportInfo: TransportInfo?,
-        positionInfo: PositionInfo?,
-        onResult: (TransportInfo, PositionInfo) -> Unit,
-    ) {
-        if (transportInfo == null || positionInfo == null) {
-            log.e("Exiting combine result! TransportInfo is null: ${transportInfo == null}, PositionInfo is null: ${positionInfo == null}")
-            return
-        }
-
-        onResult(transportInfo, positionInfo)
     }
 
     override fun selectContentDirectoryAsync(upnpDevice: UpnpDevice): Deferred<Result> = async {
@@ -206,31 +188,29 @@ class UpnpManagerImpl @Inject constructor(
             return flowOf(Result.Success)
         }
 
-        return flow<Result> {
-            getAvService()
-                .flatMapLatest { service ->
-                    val didlItem = item.didlItem.didlObject as Item
-                    val uri = didlItem.firstResource?.value ?: error("First resource or its value is null!")
-                    val didlType = didlType(didlItem)
+        return flow {
+            getAvService().flatMapLatest { service ->
+                val didlItem = item.didlItem.didlObject as Item
+                val uri = didlItem.firstResource?.value ?: error("First resource or its value is null!")
+                val didlType = didlType(didlItem)
 
-                    upnpRepository
-                        .setUriFlow(service, uri, newMetadata(didlItem, didlType))
-                        .flatMapLatest { upnpRepository.playFlow(service) }
-                        .onEach {
-                            when (didlItem) {
-                                is AudioItem,
-                                is VideoItem,
-                                -> updateChannel.emit(didlItem to service)
-                                is ImageItem -> upnpInnerStateChannel.emit(UpnpRendererState.Empty)
-                            }
+                upnpRepository
+                    .setUriFlow(service, uri, newMetadata(didlItem, didlType))
+                    .flatMapLatest { upnpRepository.playFlow(service) }
+                    .onEach {
+                        when (didlItem) {
+                            is AudioItem,
+                            is VideoItem,
+                            -> updateChannel.emit(didlItem to service)
+                            is ImageItem -> upnpInnerStateChannel.emit(UpnpRendererState.Empty)
                         }
-                }
-                .onCompletion { cause ->
-                    if (cause == null)
-                        emit(Result.Success)
-                    else
-                        emit(Result.Error)
-                }.collect()
+                    }
+            }.onCompletion { cause ->
+                if (cause == null)
+                    emit(Result.Success)
+                else
+                    emit(Result.Error)
+            }.collect()
         }.catch { e ->
             log.e(e)
             emit(Result.Error)

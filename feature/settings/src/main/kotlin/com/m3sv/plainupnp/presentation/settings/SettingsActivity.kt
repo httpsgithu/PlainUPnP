@@ -28,13 +28,11 @@ import com.m3sv.plainupnp.common.preferences.PreferencesRepository
 import com.m3sv.plainupnp.common.util.asApplicationMode
 import com.m3sv.plainupnp.common.util.pass
 import com.m3sv.plainupnp.compose.util.AppTheme
-import com.m3sv.plainupnp.compose.widgets.OnePane
-import com.m3sv.plainupnp.compose.widgets.OneTitle
-import com.m3sv.plainupnp.compose.widgets.OneToolbar
+import com.m3sv.plainupnp.compose.widgets.*
+import com.m3sv.plainupnp.interfaces.LifecycleManager
 import com.m3sv.plainupnp.presentation.onboarding.activity.ConfigureFolderActivity
 import com.m3sv.plainupnp.presentation.onboarding.selecttheme.SelectThemeActivity
 import com.m3sv.plainupnp.presentation.settings.ratehandler.RateHandler
-import com.m3sv.plainupnp.util.subscribeForFinish
 import com.m3sv.selectcontentdirectory.SelectApplicationModeActivity
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
@@ -53,9 +51,11 @@ class SettingsActivity : ComponentActivity() {
     @Inject
     lateinit var themeManager: ThemeManager
 
+    @Inject
+    lateinit var lifecycleManager: LifecycleManager
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        subscribeForFinish()
         setContent {
             val preferences by preferencesRepository.preferences.collectAsState()
             val currentTheme by themeManager.collectTheme()
@@ -74,6 +74,10 @@ class SettingsActivity : ComponentActivity() {
                         }
                     }
                 }
+
+                val lifecycleState by lifecycleManager.lifecycleState.collectAsState()
+
+                LifecycleIndicator(lifecycleState = lifecycleState)
             }
         }
     }

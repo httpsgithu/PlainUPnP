@@ -1,25 +1,34 @@
-package com.m3sv.plainupnp.upnp
+package com.m3sv.plainupnp.common.notification
 
-import android.app.Service
 import android.content.Context
 import android.content.Intent
-import android.os.IBinder
 import androidx.core.content.ContextCompat
-import com.m3sv.plainupnp.core.eventbus.events.ExitApplication
-import com.m3sv.plainupnp.core.eventbus.post
-import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.launch
+import androidx.lifecycle.LifecycleService
+import androidx.lifecycle.lifecycleScope
+import com.m3sv.plainupnp.interfaces.LifecycleManager
+import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
-class ForegroundNotificationService : Service() {
+@AndroidEntryPoint
+class ForegroundNotificationService : LifecycleService() {
 
     @Inject
-    override fun onBind(intent: Intent?): IBinder? = null
+    lateinit var lifecycleManager: LifecycleManager
+
+    override fun onCreate() {
+        super.onCreate()
+        lifecycleScope.launchWhenCreated {
+            lifecycleManager.doOnClose {
+                stopForeground(true)
+                stopSelf()
+            }
+        }
+    }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        super.onStartCommand(intent, flags, startId)
         when (intent?.action) {
             NotificationBuilder.ACTION_EXIT -> finishApplication()
-
             START_SERVICE -> startForeground(
                 NotificationBuilder.SERVER_NOTIFICATION,
                 NotificationBuilder(this).buildNotification()
@@ -35,9 +44,7 @@ class ForegroundNotificationService : Service() {
     }
 
     private fun finishApplication() {
-        MainScope().launch { post(ExitApplication) }
-        stopForeground(false)
-        stopSelf()
+        lifecycleManager.finish()
     }
 
     companion object {

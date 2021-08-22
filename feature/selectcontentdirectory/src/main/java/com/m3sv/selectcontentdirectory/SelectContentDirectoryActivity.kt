@@ -22,12 +22,13 @@ import androidx.lifecycle.lifecycleScope
 import com.m3sv.plainupnp.Router
 import com.m3sv.plainupnp.ThemeManager
 import com.m3sv.plainupnp.compose.util.AppTheme
+import com.m3sv.plainupnp.compose.widgets.LifecycleIndicator
 import com.m3sv.plainupnp.compose.widgets.OnePane
 import com.m3sv.plainupnp.compose.widgets.OneTitle
 import com.m3sv.plainupnp.compose.widgets.OneToolbar
 import com.m3sv.plainupnp.data.upnp.DeviceDisplay
+import com.m3sv.plainupnp.interfaces.LifecycleManager
 import com.m3sv.plainupnp.upnp.manager.Result
-import com.m3sv.plainupnp.util.subscribeForFinish
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -40,11 +41,14 @@ class SelectContentDirectoryActivity : ComponentActivity() {
     @Inject
     lateinit var themeManager: ThemeManager
 
+    @Inject
+    lateinit var lifecycleManager: LifecycleManager
+
     private val viewModel by viewModels<SelectContentDirectoryViewModel>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        subscribeForFinish()
+
         setContent {
             val contentDirectories by viewModel.state.collectAsState()
             val currentTheme by themeManager.collectTheme()
@@ -137,6 +141,10 @@ class SelectContentDirectoryActivity : ComponentActivity() {
                                 )
                         }
                     }
+
+                    val lifecycleState by lifecycleManager.lifecycleState.collectAsState()
+
+                    LifecycleIndicator(lifecycleState = lifecycleState)
                 }
             }
         }

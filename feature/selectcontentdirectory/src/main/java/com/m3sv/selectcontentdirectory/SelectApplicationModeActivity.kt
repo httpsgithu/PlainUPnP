@@ -14,7 +14,8 @@ import com.m3sv.plainupnp.applicationmode.SelectApplicationModeScreen
 import com.m3sv.plainupnp.common.preferences.PreferencesRepository
 import com.m3sv.plainupnp.common.util.asApplicationMode
 import com.m3sv.plainupnp.compose.util.AppTheme
-import com.m3sv.plainupnp.util.subscribeForFinish
+import com.m3sv.plainupnp.compose.widgets.LifecycleIndicator
+import com.m3sv.plainupnp.interfaces.LifecycleManager
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -28,9 +29,11 @@ class SelectApplicationModeActivity : ComponentActivity() {
     @Inject
     lateinit var themeManager: ThemeManager
 
+    @Inject
+    lateinit var lifecycleManager: LifecycleManager
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        subscribeForFinish()
         setContent {
             var modeChanged by remember { mutableStateOf(false) }
 
@@ -56,6 +59,11 @@ class SelectApplicationModeActivity : ComponentActivity() {
                         modeChanged = true
                         lifecycleScope.launch { preferencesRepository.setApplicationMode(applicationMode) }
                     }
+
+
+                    val lifecycleState by lifecycleManager.lifecycleState.collectAsState()
+
+                    LifecycleIndicator(lifecycleState = lifecycleState)
                 }
             }
         }

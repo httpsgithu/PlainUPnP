@@ -4,10 +4,14 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.material.Surface
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.res.stringResource
 import com.m3sv.plainupnp.ThemeManager
 import com.m3sv.plainupnp.compose.util.AppTheme
+import com.m3sv.plainupnp.compose.widgets.LifecycleIndicator
+import com.m3sv.plainupnp.interfaces.LifecycleManager
+import com.m3sv.plainupnp.interfaces.LifecycleState
 import com.m3sv.plainupnp.presentation.onboarding.R
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -17,6 +21,9 @@ class SelectThemeActivity : ComponentActivity() {
 
     @Inject
     lateinit var themeManager: ThemeManager
+
+    @Inject
+    lateinit var lifecycleManager: LifecycleManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,6 +40,10 @@ class SelectThemeActivity : ComponentActivity() {
                         onClick = { finish() },
                         onBackClick = { finish() }
                     )
+
+                    val lifecycleState: LifecycleState by lifecycleManager.lifecycleState.collectAsState()
+
+                    LifecycleIndicator(lifecycleState = lifecycleState)
                 }
             }
         }

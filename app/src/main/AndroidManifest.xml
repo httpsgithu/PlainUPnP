@@ -49,7 +49,7 @@
             android:resizeableActivity="true" />
 
         <service
-            android:name=".upnp.ForegroundNotificationService"
+            android:name=".common.notification.ForegroundNotificationService"
             android:exported="false" />
     </application>
 </manifest>

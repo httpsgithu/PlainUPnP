@@ -7,6 +7,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.dataStore
 import com.m3sv.plainupnp.ThemeOption
 import com.m3sv.plainupnp.applicationmode.ApplicationMode
+import com.m3sv.plainupnp.common.util.asApplicationMode
 import com.m3sv.plainupnp.data.upnp.UriWrapper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -32,6 +33,12 @@ class PreferencesRepository @Inject constructor(private val context: Application
     private val persistedUris: MutableStateFlow<List<UriWrapper>> = MutableStateFlow(listOf())
 
     val updateFlow: Flow<Boolean> = _updateFlow
+
+    val isStreaming: Boolean
+        get() = preferences
+            .value
+            .applicationMode
+            ?.asApplicationMode() == ApplicationMode.Streaming
 
     val preferences: StateFlow<Preferences> = context
         .preferencesStore
@@ -140,6 +147,7 @@ class PreferencesRepository @Inject constructor(private val context: Application
     }
 
     fun getUris(): List<UriWrapper> = context.contentResolver.persistedUriPermissions.map(::UriWrapper)
+
 
     private suspend inline fun updatePreferences(
         refreshContent: Boolean,

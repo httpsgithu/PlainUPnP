@@ -11,10 +11,12 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import com.m3sv.plainupnp.ThemeManager
 import com.m3sv.plainupnp.compose.util.AppTheme
+import com.m3sv.plainupnp.compose.widgets.LifecycleIndicator
 import com.m3sv.plainupnp.data.upnp.UriWrapper
+import com.m3sv.plainupnp.interfaces.LifecycleManager
+import com.m3sv.plainupnp.interfaces.LifecycleState
 import com.m3sv.plainupnp.presentation.onboarding.OnboardingViewModel
 import com.m3sv.plainupnp.presentation.onboarding.screen.SelectFoldersScreen
-import com.m3sv.plainupnp.util.subscribeForFinish
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
@@ -24,11 +26,13 @@ class ConfigureFolderActivity : ComponentActivity() {
     @Inject
     lateinit var themeManager: ThemeManager
 
+    @Inject
+    lateinit var lifecycleManager: LifecycleManager
+
     private val viewModel: OnboardingViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        subscribeForFinish()
         setContent {
             val contentUris: List<UriWrapper> by viewModel.contentUris.collectAsState()
             val theme by themeManager.collectTheme()
@@ -41,6 +45,10 @@ class ConfigureFolderActivity : ComponentActivity() {
                         onReleaseUri = { viewModel.releaseUri(it) },
                         onBackClick = { finish() }
                     )
+
+                    val lifecycleState: LifecycleState by lifecycleManager.lifecycleState.collectAsState()
+
+                    LifecycleIndicator(lifecycleState = lifecycleState)
                 }
             }
         }

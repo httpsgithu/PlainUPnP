@@ -6,9 +6,6 @@ import com.m3sv.plainupnp.logging.Log
 import timber.log.Timber
 import java.net.*
 
-const val CONTENT_DIRECTORY_SERVICE = "pref_contentDirectoryService"
-const val CONTENT_DIRECTORY_NAME = "pref_contentDirectoryService_name"
-
 const val PORT = 8192
 
 private fun getLocalIpAddressFromIntf(intfName: String): InetAddress? {

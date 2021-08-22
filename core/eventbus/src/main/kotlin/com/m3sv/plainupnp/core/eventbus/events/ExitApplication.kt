@@ -1,5 +1,5 @@
 package com.m3sv.plainupnp.core.eventbus.events
 
-import com.m3sv.plainupnp.core.eventbus.Event
+import com.m3sv.plainupnp.core.eventbus.EventBus
 
-object ExitApplication : Event(null)
+object ExitApplication : EventBus.Event(null)

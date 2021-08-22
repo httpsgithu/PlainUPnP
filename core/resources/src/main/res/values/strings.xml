@@ -5,8 +5,8 @@
     <string name="app_name" translatable="false">PlainUPnP</string>
     <string name="source_url" translatable="false">https://github.com/m3sv/PlainUPnP</string>
     <string name="model_number" translatable="false">2.1.0</string>
-    <string name="notification_channel_name" translatable="false">PlainUPnP server</string>
-    <string name="notification_channel_description" translatable="false">Indicates that PlainUPnP server is running</string>
+    <string name="notification_channel_name" translatable="false">PlainUPnP</string>
+    <string name="notification_channel_description" translatable="false">Indicates that PlainUPnP is running</string>
     <string name="dev_email" translatable="false">m3sv.dev@gmail.com</string>
     <string name="mail_to" translatable="false">mailto:</string>
     <string name="play_prefix" translatable="false">http://play.google.com/store/apps/details?id=</string>
@@ -34,9 +34,9 @@
     <string name="open_privacy_policy">Open privacy policy</string>
     <string name="privacy_policy">Privacy policy</string>
     <string name="enable_thumbnails">Enable thumbnails</string>
-    <string name="notification_title">PlainUPnP Server</string>
-    <string name="notification_body">PlainUPnP Server is running</string>
-    <string name="shut_down">Shut down</string>
+    <string name="notification_title">App is running</string>
+    <string name="notification_body">PlainUPnP is running</string>
+    <string name="shut_down">Exit</string>
     <string name="contact_us_title">Contact us</string>
     <string name="contact_us_body">Feature is missing? Send us an email!</string>
     <string name="dark_theme_label">Dark</string>

@@ -12,8 +12,9 @@ import com.m3sv.plainupnp.upnp.R
 import com.m3sv.plainupnp.upnp.UpnpContentRepositoryImpl
 import com.m3sv.plainupnp.upnp.resourceproviders.LocalServiceResourceProvider
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.fourthline.cling.UpnpService
 import org.fourthline.cling.UpnpServiceConfiguration
@@ -31,7 +32,6 @@ import org.fourthline.cling.transport.Router
 import org.fourthline.cling.transport.RouterException
 import org.seamless.util.Exceptions
 import timber.log.Timber
-import java.util.concurrent.RejectedExecutionException
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -106,47 +106,29 @@ class AndroidUpnpServiceImpl @Inject constructor(
         Timber.i("<<< UPnP service shutdown completed")
     }
 
-
     private val localDevice by lazy {
         getLocalDevice(resourceProvider, application, contentRepository)
     }
 
-    fun resume() {
+    fun addLocalDevice() {
         Timber.d("Resuming upnp service")
-        scope.launch {
-            flow<Unit> {
-                if (isStreaming()) {
-                    registry.addDevice(localDevice)
-                }
-                controlPoint.search()
 
-            }.retry(10) { e ->
-                log.e(e)
-                (e is RejectedExecutionException).also { if (it) delay(1000) }
-            }.catch { log.e(it) }.collect()
-        }
+        runCatching {
+            if (preferencesRepository.isStreaming) {
+                registry.addDevice(localDevice)
+            }
+        }.onFailure(log::e)
     }
 
-    fun pause() {
+    fun removeLocalDevice() {
         Timber.d("Pause upnp service")
 
-        scope.launch {
-            if (isStreaming()) {
-                try {
-                    registry.removeDevice(localDevice)
-                } catch (e: Exception) {
-                    log.e(e)
-                }
+        runCatching {
+            if (preferencesRepository.isStreaming) {
+                registry.removeDevice(localDevice)
             }
-        }
+        }.onFailure(log::e)
     }
-
-    private fun isStreaming(): Boolean =
-        preferencesRepository
-            .preferences
-            .value
-            .applicationMode
-            ?.asApplicationMode() == ApplicationMode.Streaming
 
     private fun getLocalDevice(
         serviceResourceProvider: LocalServiceResourceProvider,

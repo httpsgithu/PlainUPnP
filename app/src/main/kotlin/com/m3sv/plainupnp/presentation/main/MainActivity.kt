@@ -41,19 +41,29 @@ import com.google.accompanist.glide.rememberGlidePainter
 import com.m3sv.plainupnp.R
 import com.m3sv.plainupnp.ThemeManager
 import com.m3sv.plainupnp.compose.util.AppTheme
+import com.m3sv.plainupnp.compose.widgets.LifecycleIndicator
 import com.m3sv.plainupnp.compose.widgets.OneToolbar
 import com.m3sv.plainupnp.data.upnp.UpnpRendererState
+import com.m3sv.plainupnp.interfaces.LifecycleManager
+import com.m3sv.plainupnp.interfaces.LifecycleState
 import com.m3sv.plainupnp.presentation.SpinnerItem
 import com.m3sv.plainupnp.presentation.settings.SettingsActivity
 import com.m3sv.plainupnp.upnp.UpnpContentRepositoryImpl.Companion.USER_DEFINED_PREFIX
 import com.m3sv.plainupnp.upnp.folder.Folder
-import com.m3sv.plainupnp.util.subscribeForFinish
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import org.fourthline.cling.support.model.TransportState
 import javax.inject.Inject
+
+fun main() {
+
+
+    val lifecycleState = LifecycleState.RESUME
+
+
+}
 
 typealias ComposableFactory = @Composable () -> Unit
 typealias ModifierComposableFactory = @Composable (Modifier) -> Unit
@@ -64,6 +74,9 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var themeManager: ThemeManager
 
+    @Inject
+    lateinit var lifecycleManager: LifecycleManager
+
     private val viewModel: MainViewModel by viewModels()
 
     private var isConnectedToRenderer: Boolean = false
@@ -72,11 +85,10 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        subscribeForFinish()
+
         setContent {
             var selectedRenderer by rememberSaveable { mutableStateOf("Stream to") }
             var showFilter by rememberSaveable { mutableStateOf(false) }
-
             val volume by viewModel.volume.collectAsState()
             val navigationBarState: List<Folder> by viewModel.navigation.collectAsState()
             val folderContentsState: FolderContents by viewModel.folderContents.collectAsState()
@@ -88,11 +100,8 @@ class MainActivity : ComponentActivity() {
             val isSelectRendererButtonExpanded: Boolean by viewModel.isSelectRendererButtonExpanded.collectAsState()
             val isSelectRendererDialogExpanded: Boolean by viewModel.isSelectRendererDialogExpanded.collectAsState()
             val isSettingsDialogExpanded: Boolean by viewModel.isSettingsDialogExpanded.collectAsState()
-
             val currentTheme by themeManager.collectTheme()
-
             val showControls = upnpState !is UpnpRendererState.Empty
-
             val configuration = LocalConfiguration.current
 
             fun clearFilterText() {
@@ -201,6 +210,10 @@ class MainActivity : ComponentActivity() {
                             modifier = Modifier.align(Alignment.CenterStart)
                         )
                     }
+
+                    val lifecycleState by lifecycleManager.lifecycleState.collectAsState()
+
+                    LifecycleIndicator(lifecycleState = lifecycleState)
                 }
             }
         }
