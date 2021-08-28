@@ -5,11 +5,11 @@ buildscript {
             'targetSdk' : 30,
             'buildTools': '30.0.3',
             'version'   : [
-                    'major': 2,
-                    'minor': 8,
-                    'patch': 2,
+                    'major': 3,
+                    'minor': 0,
+                    'patch': 0,
                     'build': 0,
-                    'code' : 68
+                    'code' : 72
             ],
     ]
 
