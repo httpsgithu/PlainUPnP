@@ -22,7 +22,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:7.0.0'
+        classpath 'com.android.tools.build:gradle:7.0.1'
         classpath(libs.gradle.plugin.sqldelight)
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.5.21"
         classpath(libs.gradle.plugin.hilt)

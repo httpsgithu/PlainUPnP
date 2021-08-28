@@ -45,7 +45,6 @@ import com.m3sv.plainupnp.compose.widgets.LifecycleIndicator
 import com.m3sv.plainupnp.compose.widgets.OneToolbar
 import com.m3sv.plainupnp.data.upnp.UpnpRendererState
 import com.m3sv.plainupnp.interfaces.LifecycleManager
-import com.m3sv.plainupnp.interfaces.LifecycleState
 import com.m3sv.plainupnp.presentation.SpinnerItem
 import com.m3sv.plainupnp.presentation.settings.SettingsActivity
 import com.m3sv.plainupnp.upnp.UpnpContentRepositoryImpl.Companion.USER_DEFINED_PREFIX
@@ -56,14 +55,6 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import org.fourthline.cling.support.model.TransportState
 import javax.inject.Inject
-
-fun main() {
-
-
-    val lifecycleState = LifecycleState.RESUME
-
-
-}
 
 typealias ComposableFactory = @Composable () -> Unit
 typealias ModifierComposableFactory = @Composable (Modifier) -> Unit

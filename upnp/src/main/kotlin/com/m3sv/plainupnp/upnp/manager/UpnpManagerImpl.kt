@@ -47,15 +47,14 @@ sealed class Result {
 }
 
 class UpnpManagerImpl @Inject constructor(
-    private val rendererDiscoveryObservable: RendererDiscoveryObservable,
-    private val contentDirectoryObservable: ContentDirectoryDiscoveryObservable,
-    private val launchLocally: LaunchLocallyUseCase,
-    private val upnpRepository: UpnpRepository,
-    private val volumeRepository: VolumeRepository,
-    private val contentRepository: UpnpContentRepositoryImpl,
-    private val log: Log
-) : UpnpManager,
-    CoroutineScope {
+        private val rendererDiscoveryObservable: RendererDiscoveryObservable,
+        private val contentDirectoryObservable: ContentDirectoryDiscoveryObservable,
+        private val launchLocally: LaunchLocallyUseCase,
+        private val upnpRepository: UpnpRepository,
+        private val volumeRepository: VolumeRepository,
+        private val contentRepository: UpnpContentRepositoryImpl,
+        private val log: Log
+) : UpnpManager, CoroutineScope {
 
     override val coroutineContext: CoroutineContext = SupervisorJob() + Dispatchers.Default
 
@@ -101,23 +100,23 @@ class UpnpManagerImpl @Inject constructor(
                         delay(500)
 
                         combine(
-                            upnpRepository.getTransportInfoFlow(service),
-                            upnpRepository.getPositionInfoFlow(service)
+                                upnpRepository.getTransportInfoFlow(service),
+                                upnpRepository.getPositionInfoFlow(service)
                         ) { transportInfo, positionInfo ->
                             remotePaused =
-                                transportInfo.currentTransportState == TransportState.PAUSED_PLAYBACK
+                                    transportInfo.currentTransportState == TransportState.PAUSED_PLAYBACK
 
                             val state = UpnpRendererState.Default(
-                                uri = uri,
-                                type = type,
-                                state = transportInfo.currentTransportState,
-                                remainingDuration = positionInfo.remainingDuration,
-                                duration = positionInfo.duration,
-                                position = positionInfo.position,
-                                elapsedPercent = positionInfo.elapsedPercent,
-                                durationSeconds = positionInfo.trackDurationSeconds,
-                                title = title,
-                                artist = artist ?: ""
+                                    uri = uri,
+                                    type = type,
+                                    state = transportInfo.currentTransportState,
+                                    remainingDuration = positionInfo.remainingDuration,
+                                    duration = positionInfo.duration,
+                                    position = positionInfo.position,
+                                    elapsedPercent = positionInfo.elapsedPercent,
+                                    durationSeconds = positionInfo.trackDurationSeconds,
+                                    title = title,
+                                    artist = artist ?: ""
                             )
 
                             currentDuration = positionInfo.trackDurationSeconds
@@ -143,8 +142,8 @@ class UpnpManagerImpl @Inject constructor(
 
                     if (contentDirectory != null) {
                         safeNavigateTo(
-                            folderId = ROOT_FOLDER_ID,
-                            folderName = contentDirectory.friendlyName
+                                folderId = ROOT_FOLDER_ID,
+                                folderName = contentDirectory.friendlyName
                         )
                     }
                 }
@@ -158,8 +157,8 @@ class UpnpManagerImpl @Inject constructor(
         contentDirectoryObservable.selectedContentDirectory = upnpDevice
 
         safeNavigateTo(
-            folderId = ROOT_FOLDER_ID,
-            folderName = upnpDevice.friendlyName
+                folderId = ROOT_FOLDER_ID,
+                folderName = upnpDevice.friendlyName
         )
     }
 
@@ -195,16 +194,16 @@ class UpnpManagerImpl @Inject constructor(
                 val didlType = didlType(didlItem)
 
                 upnpRepository
-                    .setUriFlow(service, uri, newMetadata(didlItem, didlType))
-                    .flatMapLatest { upnpRepository.playFlow(service) }
-                    .onEach {
-                        when (didlItem) {
-                            is AudioItem,
-                            is VideoItem,
-                            -> updateChannel.emit(didlItem to service)
-                            is ImageItem -> upnpInnerStateChannel.emit(UpnpRendererState.Empty)
+                        .setUriFlow(service, uri, newMetadata(didlItem, didlType))
+                        .flatMapLatest { upnpRepository.playFlow(service) }
+                        .onEach {
+                            when (didlItem) {
+                                is AudioItem,
+                                is VideoItem,
+                                -> updateChannel.emit(didlItem to service)
+                                is ImageItem -> upnpInnerStateChannel.emit(UpnpRendererState.Empty)
+                            }
                         }
-                    }
             }.onCompletion { cause ->
                 if (cause == null)
                     emit(Result.Success)
@@ -218,18 +217,18 @@ class UpnpManagerImpl @Inject constructor(
     }
 
     private fun newMetadata(
-        didlItem: Item,
-        didlType: String?,
+            didlItem: Item,
+            didlType: String?,
     ): TrackMetadata = with(didlItem) {
         // TODO genre && artURI
         TrackMetadata(
-            id,
-            title,
-            creator,
-            "",
-            "",
-            firstResource.value,
-            "object.item.$didlType"
+                id,
+                title,
+                creator,
+                "",
+                "",
+                firstResource.value,
+                "object.item.$didlType"
         )
     }
 
@@ -289,72 +288,72 @@ class UpnpManagerImpl @Inject constructor(
     override fun pausePlayback() {
         launch {
             getAvService()
-                .flatMapLatest { service -> upnpRepository.pauseFlow(service) }
-                .catch("Failed to pause playback")
-                .collect()
+                    .flatMapLatest { service -> upnpRepository.pauseFlow(service) }
+                    .catch("Failed to pause playback")
+                    .collect()
         }
     }
 
     override fun stopPlayback() {
         launch {
             getAvService()
-                .flatMapLatest { service -> upnpRepository.stopFlow(service) }
-                .catch("Failed to stop playback").collect()
+                    .flatMapLatest { service -> upnpRepository.stopFlow(service) }
+                    .catch("Failed to stop playback").collect()
         }
     }
 
     override fun resumePlayback() {
         launch {
             getAvService()
-                .flatMapLatest { service -> upnpRepository.playFlow(service) }
-                .catch("Failed to resume playback")
-                .collect()
+                    .flatMapLatest { service -> upnpRepository.playFlow(service) }
+                    .catch("Failed to resume playback")
+                    .collect()
         }
     }
 
     override fun seekTo(progress: Int) {
         launch {
             getAvService()
-                .onStart { pauseUpdate = true }
-                .flatMapLatest { service ->
-                    upnpRepository.seekToFlow(
-                        service = service,
-                        time = formatTime(
-                            max = MAX_PROGRESS,
-                            progress = progress,
-                            duration = currentDuration
+                    .onStart { pauseUpdate = true }
+                    .flatMapLatest { service ->
+                        upnpRepository.seekToFlow(
+                                service = service,
+                                time = formatTime(
+                                        max = MAX_PROGRESS,
+                                        progress = progress,
+                                        duration = currentDuration
+                                )
                         )
-                    )
-                }
-                .onEach { pauseUpdate = false }
-                .catch("Failed to seek to progress!")
-                .collect()
+                    }
+                    .onEach { pauseUpdate = false }
+                    .catch("Failed to seek to progress!")
+                    .collect()
         }
     }
 
 
     override suspend fun raiseVolume(step: Int) {
         getRcService()
-            .catch("Failed to raise volume with step $step!")
-            .collect { service -> volumeRepository.raiseVolume(service, step) }
+                .catch("Failed to raise volume with step $step!")
+                .collect { service -> volumeRepository.raiseVolume(service, step) }
     }
 
     override suspend fun lowerVolume(step: Int) {
         getRcService()
-            .catch("Failed to lower volume with step $step!")
-            .collect { service -> volumeRepository.lowerVolume(service, step) }
+                .catch("Failed to lower volume with step $step!")
+                .collect { service -> volumeRepository.lowerVolume(service, step) }
     }
 
     override suspend fun muteVolume(mute: Boolean) {
         getRcService()
-            .catch("Failed to set mute to $mute!")
-            .collect { service -> volumeRepository.muteVolume(service, mute) }
+                .catch("Failed to set mute to $mute!")
+                .collect { service -> volumeRepository.muteVolume(service, mute) }
     }
 
     override suspend fun setVolume(volume: Int) {
         getRcService()
-            .catch("Failed to set volume to $volume!")
-            .collect { service -> volumeRepository.setVolume(service, volume) }
+                .catch("Failed to set volume to $volume!")
+                .collect { service -> volumeRepository.setVolume(service, volume) }
     }
 
     override suspend fun getVolume(): Flow<Int> = getRcService().map { service -> volumeRepository.getVolume(service) }
@@ -372,10 +371,10 @@ class UpnpManagerImpl @Inject constructor(
 
     private fun navigateTo(id: String, folderName: String): Flow<Result> = flow {
         emit(
-            safeNavigateTo(
-                folderId = id,
-                folderName = folderName
-            )
+                safeNavigateTo(
+                        folderId = id,
+                        folderName = folderName
+                )
         )
     }.flowOn(Dispatchers.IO)
 
@@ -386,14 +385,14 @@ class UpnpManagerImpl @Inject constructor(
     override fun togglePlayback() {
         launch {
             getAvService()
-                .flatMapLatest { service ->
-                    if (remotePaused)
-                        upnpRepository.playFlow(service)
-                    else
-                        upnpRepository.pauseFlow(service)
-                }
-                .catch("Failed to toggle playback ($remotePaused)!")
-                .collect()
+                    .flatMapLatest { service ->
+                        if (remotePaused)
+                            upnpRepository.playFlow(service)
+                        else
+                            upnpRepository.pauseFlow(service)
+                    }
+                    .catch("Failed to toggle playback ($remotePaused)!")
+                    .collect()
         }
     }
 
@@ -411,8 +410,8 @@ class UpnpManagerImpl @Inject constructor(
     }
 
     private suspend inline fun safeNavigateTo(
-        folderId: String,
-        folderName: String,
+            folderId: String,
+            folderName: String,
     ): Result {
         Timber.d("Navigating to $folderId with name $folderName")
 
@@ -423,7 +422,7 @@ class UpnpManagerImpl @Inject constructor(
             Result.Error
         } else {
             val service: Service<*, *>? =
-                (selectedDevice as CDevice).device.findService(UDAServiceType(CONTENT_DIRECTORY))
+                    (selectedDevice as CDevice).device.findService(UDAServiceType(CONTENT_DIRECTORY))
 
             if (service == null || !service.hasActions()) {
                 return Result.Error
@@ -440,28 +439,28 @@ class UpnpManagerImpl @Inject constructor(
 
             val folder = when (folderId) {
                 ROOT_FOLDER_ID -> Folder.Root(
-                    FolderModel(
-                        id = folderId,
-                        title = currentFolderName,
-                        contents = currentContent.value
-                    )
+                        FolderModel(
+                                id = folderId,
+                                title = currentFolderName,
+                                contents = currentContent.value
+                        )
                 )
                 else -> Folder.SubFolder(
-                    FolderModel(
-                        id = folderId,
-                        title = currentFolderName,
-                        contents = currentContent.value
-                    )
+                        FolderModel(
+                                id = folderId,
+                                title = currentFolderName,
+                                contents = currentContent.value
+                        )
                 )
             }
 
             folderStack.value = when (folder) {
                 is Folder.Root -> listOf(folder)
                 is Folder.SubFolder -> folderStack
-                    .value
-                    .toMutableList()
-                    .apply { add(folder) }
-                    .toList()
+                        .value
+                        .toMutableList()
+                        .apply { add(folder) }
+                        .toList()
             }
 
             Result.Success
@@ -470,8 +469,10 @@ class UpnpManagerImpl @Inject constructor(
 
     private fun getAvService(): Flow<Service<*, *>> = flow {
         rendererDiscoveryObservable.getSelectedRenderer()?.let { renderer ->
-            val service: Service<*, *> = (renderer as CDevice).device.findService(UDAServiceType(AV_TRANSPORT))
-                ?: error("AvService is not found!")
+            val service: Service<*, *> = (renderer as CDevice)
+                    .device
+                    .findService(UDAServiceType(AV_TRANSPORT))
+                    ?: error("AvService is not found!")
 
             if (service.hasActions()) {
                 emit(service)
@@ -483,8 +484,10 @@ class UpnpManagerImpl @Inject constructor(
 
     private fun getRcService(): Flow<Service<*, *>> = flow {
         rendererDiscoveryObservable.getSelectedRenderer()?.let { renderer ->
-            val service: Service<*, *> = (renderer as CDevice).device.findService(UDAServiceType(RENDERING_CONTROL))
-                ?: error("RcService is not found!")
+            val service: Service<*, *> = (renderer as CDevice)
+                    .device
+                    .findService(UDAServiceType(RENDERING_CONTROL))
+                    ?: error("RcService is not found!")
 
             if (service.hasActions())
                 emit(service)
@@ -497,5 +500,6 @@ class UpnpManagerImpl @Inject constructor(
     private fun <T> Flow<T>.catch(message: String): Flow<T> = catch { e -> log.e(e, message) }
 }
 
-inline class RenderItem(val didlItem: ClingDIDLObject)
+@JvmInline
+value class RenderItem(val didlItem: ClingDIDLObject)
 
