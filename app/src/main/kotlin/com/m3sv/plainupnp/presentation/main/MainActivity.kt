@@ -508,7 +508,6 @@ class MainActivity : ComponentActivity() {
                         Text(defaultState?.title ?: "")
 
                         Surface {
-
                             Icon(
                                 painter = painterResource(id = R.drawable.ic_close),
                                 contentDescription = null,

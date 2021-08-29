@@ -2,9 +2,7 @@ package com.m3sv.plainupnp.upnp
 
 import com.m3sv.plainupnp.upnp.actions.avtransport.*
 import com.m3sv.plainupnp.upnp.actions.misc.BrowseAction
-import com.m3sv.plainupnp.upnp.didl.ClingDIDLObject
 import com.m3sv.plainupnp.upnp.trackmetadata.TrackMetadata
-import kotlinx.coroutines.flow.Flow
 import org.fourthline.cling.model.meta.Service
 import org.fourthline.cling.support.model.PositionInfo
 import org.fourthline.cling.support.model.TransportInfo
@@ -25,30 +23,31 @@ class UpnpRepository @Inject constructor(
         directoryID: String,
     ) = browseAction(service, directoryID)
 
-    fun browseFlow(
-        service: Service<*, *>,
-        directoryID: String,
-    ): Flow<List<ClingDIDLObject>> = browseAction.browse(service, directoryID)
-
-    fun getPositionInfoFlow(service: Service<*, *>): Flow<PositionInfo> = getPositionInfoAction.getPositionInfo(service)
-
-    fun getTransportInfoFlow(service: Service<*, *>): Flow<TransportInfo> =
-        getTransportInfoAction.getTransportInfo(service)
-
-    fun seekToFlow(service: Service<*, *>, time: String): Flow<Unit> {
-        return seekToAction.seek(service, time)
+    suspend fun getPositionInfo(service: Service<*, *>): PositionInfo {
+        return getPositionInfoAction.getPositionInfo(service)
     }
 
-    fun stopFlow(service: Service<*, *>): Flow<Unit> {
-        return stopAction.stop(service)
+    suspend fun getTransportInfo(service: Service<*, *>): TransportInfo {
+        return getTransportInfoAction.getTransportInfo(service)
     }
 
-    fun pauseFlow(service: Service<*, *>): Flow<Unit> {
-        return pauseAction.pause(service)
+    suspend fun seekTo(service: Service<*, *>, time: String) {
+        seekToAction.seekTo(service, time)
     }
 
-    fun playFlow(service: Service<*, *>): Flow<Unit> = playAction.play(service)
+    suspend fun stop(service: Service<*, *>) {
+        stopAction.stop(service)
+    }
 
-    fun setUriFlow(service: Service<*, *>, uri: String, metadata: TrackMetadata): Flow<Unit> =
+    suspend fun pause(service: Service<*, *>) {
+        pauseAction.pause(service)
+    }
+
+    suspend fun play(service: Service<*, *>) {
+        playAction.play(service)
+    }
+
+    suspend fun setUri(service: Service<*, *>, uri: String, metadata: TrackMetadata) {
         setUriAction.setUri(service, uri, metadata)
+    }
 }

@@ -17,7 +17,7 @@ class RendererDiscoveryObservable @Inject constructor(
     application: Application,
     private val rendererDiscovery: RendererDiscovery,
 ) {
-    private var selectedRenderer: MutableStateFlow<UpnpDevice?> = MutableStateFlow(null)
+    private var _selectedRenderer: MutableStateFlow<UpnpDevice?> = MutableStateFlow(null)
 
     private val renderers =
         LinkedHashSet<DeviceDisplay>(listOf(DeviceDisplay(LocalDevice(application.getString(R.string.play_locally)))))
@@ -25,19 +25,19 @@ class RendererDiscoveryObservable @Inject constructor(
     val currentRenderers: List<DeviceDisplay>
         get() = renderers.toList()
 
+    val selectedRenderer: StateFlow<UpnpDevice?> = _selectedRenderer
+
+    val isConnectedToRenderer: Boolean
+        get() = selectedRenderer.value != null
+
     fun selectRenderer(upnpDevice: UpnpDevice?) {
-        selectedRenderer.value = upnpDevice
+        _selectedRenderer.value = upnpDevice
     }
-
-    fun getSelectedRenderer(): UpnpDevice? = selectedRenderer.value
-
-    fun observeSelectRenderer(): StateFlow<UpnpDevice?> = selectedRenderer
 
     operator fun invoke() = callbackFlow {
         rendererDiscovery.startObserving()
 
-        val callback = object :
-            DeviceDiscoveryObserver {
+        val callback = object : DeviceDiscoveryObserver {
             override fun addedDevice(event: UpnpDeviceEvent) {
                 handleEvent(event)
                 sendRenderers()
@@ -71,7 +71,7 @@ class RendererDiscoveryObservable @Inject constructor(
                             renderers -= device
 
                         if (event.upnpDevice == selectedRenderer.value)
-                            selectedRenderer.value = null
+                            _selectedRenderer.value = null
                     }
                 }
             }
@@ -82,8 +82,7 @@ class RendererDiscoveryObservable @Inject constructor(
         }
 
         rendererDiscovery.addObserver(callback)
-        trySendBlocking(currentRenderers)
+        send(currentRenderers)
         awaitClose { rendererDiscovery.removeObserver(callback) }
     }
-
 }

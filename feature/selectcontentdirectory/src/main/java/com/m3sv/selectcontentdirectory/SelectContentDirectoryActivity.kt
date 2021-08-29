@@ -100,15 +100,15 @@ class SelectContentDirectoryActivity : ComponentActivity() {
                                     content = {
                                         itemsIndexed(contentDirectories) { index, item ->
                                             Column(modifier = Modifier.clickable(enabled = loadingDeviceDisplay == null) {
+                                                // TODO move this to ViewModel
                                                 loadingDeviceDisplay = item
 
                                                 lifecycleScope.launch(Dispatchers.IO) {
-                                                    when (viewModel
-                                                        .selectContentDirectoryAsync(item.upnpDevice)
-                                                        .await()
-                                                    ) {
-                                                        Result.Error -> withContext(Dispatchers.Main) { handleSelectDirectoryError() }
+                                                    when (viewModel.selectContentDirectory(item.upnpDevice)) {
                                                         Result.Success -> handleSelectDirectorySuccess()
+                                                        Result.Error.GENERIC,
+                                                        Result.Error.RENDERER_NOT_SELECTED,
+                                                        Result.Error.AV_SERVICE_NOT_FOUND -> withContext(Dispatchers.Main) { handleSelectDirectoryError() }
                                                     }
 
                                                     loadingDeviceDisplay = null

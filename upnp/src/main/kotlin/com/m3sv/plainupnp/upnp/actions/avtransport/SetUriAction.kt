@@ -2,10 +2,6 @@ package com.m3sv.plainupnp.upnp.actions.avtransport
 
 import com.m3sv.plainupnp.logging.Log
 import com.m3sv.plainupnp.upnp.trackmetadata.TrackMetadata
-import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.channels.trySendBlocking
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.callbackFlow
 import org.fourthline.cling.controlpoint.ControlPoint
 import org.fourthline.cling.model.action.ActionInvocation
 import org.fourthline.cling.model.message.UpnpResponse
@@ -13,22 +9,23 @@ import org.fourthline.cling.model.meta.Service
 import org.fourthline.cling.support.avtransport.callback.SetAVTransportURI
 import timber.log.Timber
 import javax.inject.Inject
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
 class SetUriAction @Inject constructor(private val controlPoint: ControlPoint, private val log: Log) {
 
-    fun setUri(
+    suspend fun setUri(
         service: Service<*, *>,
         uri: String,
         trackMetadata: TrackMetadata,
-    ): Flow<Unit> = callbackFlow {
+    ): Boolean = suspendCoroutine { continuation ->
         val tag = "AV"
         Timber.tag(tag).d("Set uri: $uri")
         val action = object : SetAVTransportURI(service, uri, trackMetadata.getXml(log)) {
 
             override fun success(invocation: ActionInvocation<out Service<*, *>>?) {
                 Timber.tag(tag).d("Set uri: $uri success")
-                trySendBlocking(Unit)
-                close()
+                continuation.resume(true)
             }
 
             override fun failure(
@@ -36,42 +33,11 @@ class SetUriAction @Inject constructor(private val controlPoint: ControlPoint, p
                 p1: UpnpResponse?,
                 p2: String?,
             ) {
-                error("Set uri $uri failed")
+                Timber.tag(tag).e("Failed to set uri: $uri")
+                continuation.resume(false)
             }
         }
+
         controlPoint.execute(action)
-
-        awaitClose()
     }
-
-//    suspend operator fun invoke(
-//        service: Service<*, *>,
-//        uri: String,
-//        trackMetadata: TrackMetadata,
-//    ): Boolean = invoke(service, uri, trackMetadata.getXml(log))
-//
-//    override suspend fun invoke(
-//        service: Service<*, *>,
-//        vararg arguments: String,
-//    ): Boolean = suspendCoroutine { continuation ->
-//        val tag = "AV"
-//        Timber.tag(tag).d("Set uri: ${arguments[0]}")
-//        val action = object : SetAVTransportURI(service, arguments[0], arguments[1]) {
-//
-//            override fun success(invocation: ActionInvocation<out Service<*, *>>?) {
-//                Timber.tag(tag).d("Set uri: ${arguments[0]} success")
-//                continuation.resume(true)
-//            }
-//
-//            override fun failure(
-//                p0: ActionInvocation<out Service<*, *>>?,
-//                p1: UpnpResponse?,
-//                p2: String?,
-//            ) {
-//                Timber.tag(tag).e("Failed to set uri: ${arguments[0]}")
-//                continuation.resume(false)
-//            }
-//        }
-//        controlPoint.execute(action)
-//    }
 }

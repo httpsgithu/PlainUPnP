@@ -3,9 +3,11 @@ package com.m3sv.plainupnp.presentation.main
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.m3sv.plainupnp.common.preferences.PreferencesRepository
+import com.m3sv.plainupnp.common.util.pass
 import com.m3sv.plainupnp.data.upnp.UpnpRendererState
 import com.m3sv.plainupnp.presentation.SpinnerItem
 import com.m3sv.plainupnp.upnp.folder.Folder
+import com.m3sv.plainupnp.upnp.manager.Result
 import com.m3sv.plainupnp.upnp.manager.UpnpManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -107,7 +109,7 @@ class MainViewModel @Inject constructor(
             initialValue = false
         )
 
-    private val _isSelectRendererButtonExpanded = MutableSharedFlow<Boolean>()
+    private val _isSelectRendererButtonExpanded: MutableSharedFlow<Boolean> = MutableSharedFlow(1)
 
     val isSelectRendererButtonExpanded: StateFlow<Boolean> = _isSelectRendererButtonExpanded
         .transformLatest { visible ->
@@ -130,11 +132,16 @@ class MainViewModel @Inject constructor(
 
     fun itemClick(id: String) {
         viewModelScope.launch {
-            upnpManager
-                .itemClick(id)
-                .onStart { _loading.value = true }
-                .onCompletion { _loading.value = false }
-                .collect()
+            _loading.value = true
+
+            when (upnpManager.itemClick(id)) {
+                Result.Error.RENDERER_NOT_SELECTED -> _isSelectRendererButtonExpanded.emit(true)
+                Result.Success,
+                Result.Error.AV_SERVICE_NOT_FOUND,
+                Result.Error.GENERIC -> pass
+            }
+
+            _loading.value = false
         }
     }
 
@@ -169,7 +176,7 @@ class MainViewModel @Inject constructor(
     }
 
     fun selectRenderer(position: SpinnerItem) {
-        upnpManager.selectRenderer(position)
+        viewModelScope.launch { upnpManager.selectRenderer(position) }
     }
 
     fun playerButtonClick(button: PlayerButton) {
@@ -186,11 +193,11 @@ class MainViewModel @Inject constructor(
     }
 
     fun navigateBack() {
-        upnpManager.navigateBack()
+        viewModelScope.launch { upnpManager.navigateBack() }
     }
 
     fun navigateTo(folder: Folder) {
-        upnpManager.navigateTo(folder)
+        viewModelScope.launch { upnpManager.navigateTo(folder) }
     }
 
     fun filterInput(text: String) {

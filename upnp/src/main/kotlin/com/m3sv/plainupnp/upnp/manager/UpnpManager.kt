@@ -7,7 +7,6 @@ import com.m3sv.plainupnp.presentation.SpinnerItem
 import com.m3sv.plainupnp.upnp.folder.Folder
 import com.m3sv.plainupnp.upnp.playback.PlaybackManager
 import com.m3sv.plainupnp.upnp.volume.UpnpVolumeManager
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.flow.Flow
 
 interface UpnpManager : UpnpVolumeManager, PlaybackManager {
@@ -17,10 +16,10 @@ interface UpnpManager : UpnpVolumeManager, PlaybackManager {
     val upnpRendererState: Flow<UpnpRendererState>
     val navigationStack: Flow<List<Folder>>
 
-    fun navigateBack()
-    fun navigateTo(folder: Folder)
-    fun itemClick(id: String): Flow<Result>
-    fun seekTo(progress: Int)
-    fun selectContentDirectoryAsync(upnpDevice: UpnpDevice): Deferred<Result>
-    fun selectRenderer(spinnerItem: SpinnerItem)
+    suspend fun navigateBack()
+    suspend fun navigateTo(folder: Folder)
+    suspend fun itemClick(id: String): Result
+    suspend fun seekTo(progress: Int)
+    suspend fun selectContentDirectory(upnpDevice: UpnpDevice): Result
+    suspend fun selectRenderer(spinnerItem: SpinnerItem)
 }
