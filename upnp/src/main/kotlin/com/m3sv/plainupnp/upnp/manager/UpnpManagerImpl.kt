@@ -480,7 +480,7 @@ class UpnpManagerImpl @Inject constructor(
                     val service: Service<*, *> = (renderer as CDevice)
                             .device
                             .findService(UDAServiceType(AV_TRANSPORT))
-                            ?: error("AvService is not found!")
+                            ?: return null
 
                     if (service.hasActions()) {
                         service
@@ -496,7 +496,7 @@ class UpnpManagerImpl @Inject constructor(
                     val service: Service<*, *> = (renderer as CDevice)
                             .device
                             .findService(UDAServiceType(RENDERING_CONTROL))
-                            ?: error("RcService is not found!")
+                            ?: return null
 
                     if (service.hasActions())
                         service

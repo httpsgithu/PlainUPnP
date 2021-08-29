@@ -32,11 +32,13 @@ class MainViewModel @Inject constructor(
 
     val volume: StateFlow<VolumeUpdate> = volumeManager
         .volumeFlow
-        .transform { volume ->
-            emit(VolumeUpdate.Show(volume))
-            delay(2500)
-            emit(VolumeUpdate.Hide(volume))
-        }.stateIn(
+        .map { volume -> VolumeUpdate.Show(volume) }
+        .transformLatest { volumeUpdate ->
+            emit(volumeUpdate)
+            delay(HIDE_VOLUME_INDICATOR_DELAY)
+            emit(VolumeUpdate.Hide(volumeUpdate.volume))
+        }
+        .stateIn(
             scope = viewModelScope,
             started = SharingStarted.Lazily,
             initialValue = VolumeUpdate.Hide(-1)
@@ -206,4 +208,8 @@ class MainViewModel @Inject constructor(
         }
     }
 
+
+    companion object {
+        private const val HIDE_VOLUME_INDICATOR_DELAY: Long = 2500
+    }
 }

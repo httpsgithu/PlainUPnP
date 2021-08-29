@@ -9,8 +9,7 @@ import javax.inject.Inject
 import kotlin.properties.Delegates
 
 
-class BufferedVolumeManager @Inject constructor(volumeManager: UpnpVolumeManager) :
-    UpnpVolumeManager by volumeManager {
+class BufferedVolumeManager @Inject constructor(volumeManager: UpnpVolumeManager) : UpnpVolumeManager by volumeManager {
 
     private var timeoutJob: Job? = null
 

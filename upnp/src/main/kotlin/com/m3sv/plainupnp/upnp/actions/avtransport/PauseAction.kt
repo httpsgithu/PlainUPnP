@@ -12,10 +12,7 @@ import kotlin.coroutines.suspendCoroutine
 
 class PauseAction @Inject constructor(private val controlPoint: ControlPoint) {
 
-    suspend fun pause(
-        service: Service<*, *>,
-        vararg arguments: Unit,
-    ): Boolean = suspendCoroutine { continuation ->
+    suspend fun pause(service: Service<*, *>): Boolean = suspendCoroutine { continuation ->
         val tag = "AV"
         Timber.tag(tag).d("Pause called")
         val action = object : Pause(service) {
