@@ -2,7 +2,7 @@ package com.m3sv.plainupnp.upnp.android
 
 import android.app.Application
 import android.content.Context
-import com.m3sv.plainupnp.applicationmode.ApplicationMode
+import com.m3sv.plainupnp.common.ApplicationMode
 import com.m3sv.plainupnp.common.preferences.PreferencesRepository
 import com.m3sv.plainupnp.common.util.asApplicationMode
 import com.m3sv.plainupnp.logging.Log
@@ -11,7 +11,9 @@ import com.m3sv.plainupnp.upnp.PlainUpnpServiceConfiguration
 import com.m3sv.plainupnp.upnp.R
 import com.m3sv.plainupnp.upnp.UpnpContentRepositoryImpl
 import com.m3sv.plainupnp.upnp.resourceproviders.LocalServiceResourceProvider
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
@@ -22,7 +24,13 @@ import org.fourthline.cling.binding.annotations.AnnotationLocalServiceBinder
 import org.fourthline.cling.controlpoint.ControlPoint
 import org.fourthline.cling.controlpoint.ControlPointImpl
 import org.fourthline.cling.model.DefaultServiceManager
-import org.fourthline.cling.model.meta.*
+import org.fourthline.cling.model.meta.DeviceDetails
+import org.fourthline.cling.model.meta.DeviceIdentity
+import org.fourthline.cling.model.meta.Icon
+import org.fourthline.cling.model.meta.LocalDevice
+import org.fourthline.cling.model.meta.LocalService
+import org.fourthline.cling.model.meta.ManufacturerDetails
+import org.fourthline.cling.model.meta.ModelDetails
 import org.fourthline.cling.model.types.UDADeviceType
 import org.fourthline.cling.protocol.ProtocolFactory
 import org.fourthline.cling.protocol.ProtocolFactoryImpl
@@ -54,7 +62,7 @@ class AndroidUpnpServiceImpl @Inject constructor(
 
     private val router: Router = AndroidRouter(configuration, _protocolFactory, application)
 
-    private val scope = GlobalScope
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     override fun getProtocolFactory(): ProtocolFactory = _protocolFactory
 

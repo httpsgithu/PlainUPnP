@@ -17,6 +17,7 @@ android {
 
 dependencies {
     implementation project(':common')
+    implementation project(':compose')
 
     implementation(libs.androidx.documentfile)
     implementation(libs.bundles.compose)

@@ -7,14 +7,6 @@ apply plugin: "com.google.protobuf"
 
 android {
     with flavorConfig
-
-    buildFeatures {
-        compose true
-    }
-
-    composeOptions {
-        kotlinCompilerExtensionVersion libs.versions.compose.get()
-    }
 }
 
 dependencies {
@@ -24,19 +16,18 @@ dependencies {
     playImplementation 'com.google.firebase:firebase-analytics-ktx'
 
     implementation(libs.androidx.lifecycle.extensions)
+
     implementation(libs.bundles.coroutines)
     implementation(libs.hilt.android.core)
     implementation(libs.timber)
+    implementation(libs.androidx.appcompat)
 
-    implementation(libs.bundles.compose)
     implementation(libs.bundles.cling)
 
     implementation "androidx.datastore:datastore:1.0.0-beta02"
     api "com.google.protobuf:protobuf-javalite:3.10.0"
 
-    implementation project(':core:resources')
-    implementation project(':core:eventbus')
-
+    implementation project(':resources')
     kapt(libs.hilt.compiler)
 
     testImplementation(libs.test.junit)

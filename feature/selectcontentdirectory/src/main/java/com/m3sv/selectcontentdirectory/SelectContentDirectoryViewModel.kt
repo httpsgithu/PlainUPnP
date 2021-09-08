@@ -3,7 +3,6 @@ package com.m3sv.selectcontentdirectory
 import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.m3sv.plainupnp.common.notification.ForegroundNotificationService
 import com.m3sv.plainupnp.common.util.pass
 import com.m3sv.plainupnp.data.upnp.DeviceDisplay
 import com.m3sv.plainupnp.data.upnp.UpnpDevice

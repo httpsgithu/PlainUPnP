@@ -1,14 +1,23 @@
 package com.m3sv.plainupnp.presentation.onboarding.selecttheme
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.m3sv.plainupnp.ThemeOption
-import com.m3sv.plainupnp.compose.widgets.*
+import com.m3sv.plainupnp.common.ThemeOption
+import com.m3sv.plainupnp.compose.OneContainedButton
+import com.m3sv.plainupnp.compose.OnePane
+import com.m3sv.plainupnp.compose.OneSubtitle
+import com.m3sv.plainupnp.compose.OneTitle
+import com.m3sv.plainupnp.compose.OneToolbar
+import com.m3sv.plainupnp.compose.RadioGroup
 
 @Composable
 fun SelectThemeScreen(
@@ -23,9 +32,10 @@ fun SelectThemeScreen(
         OneTitle(text = titleText)
         OneToolbar(onBackClick = onBackClick) {}
     }) {
-        Column(Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
+        Column(
+            Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
         ) {
             OneSubtitle(
                 text = "Start by selecting theme that you would like to use",
@@ -42,9 +52,10 @@ fun SelectThemeScreen(
 
             Spacer(Modifier.weight(1f))
 
-            Row(modifier = Modifier
-                .padding(horizontal = 24.dp)
-                .padding(bottom = 24.dp)
+            Row(
+                modifier = Modifier
+                    .padding(horizontal = 24.dp)
+                    .padding(bottom = 24.dp)
             ) {
                 OneContainedButton(text = buttonText, onClick = onClick)
             }

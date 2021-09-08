@@ -29,6 +29,7 @@ dependencies {
     implementation(libs.bundles.coroutines)
     implementation(libs.hilt.android.core)
     implementation(libs.timber)
+    implementation project(path: ':compose')
 
     playImplementation(libs.bundles.play.core)
 

@@ -10,10 +10,33 @@ import com.m3sv.plainupnp.ContentModel
 import com.m3sv.plainupnp.ContentRepository
 import com.m3sv.plainupnp.common.preferences.PreferencesRepository
 import com.m3sv.plainupnp.logging.Log
-import com.m3sv.plainupnp.upnp.mediacontainers.*
-import com.m3sv.plainupnp.upnp.util.*
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import com.m3sv.plainupnp.upnp.mediacontainers.AlbumContainer
+import com.m3sv.plainupnp.upnp.mediacontainers.AllAudioContainer
+import com.m3sv.plainupnp.upnp.mediacontainers.AllImagesContainer
+import com.m3sv.plainupnp.upnp.mediacontainers.AllVideoContainer
+import com.m3sv.plainupnp.upnp.mediacontainers.ArtistContainer
+import com.m3sv.plainupnp.upnp.mediacontainers.AudioDirectoryContainer
+import com.m3sv.plainupnp.upnp.mediacontainers.BaseContainer
+import com.m3sv.plainupnp.upnp.mediacontainers.Container
+import com.m3sv.plainupnp.upnp.mediacontainers.ContentDirectory
+import com.m3sv.plainupnp.upnp.mediacontainers.ImageDirectoryContainer
+import com.m3sv.plainupnp.upnp.mediacontainers.VideoDirectoryContainer
+import com.m3sv.plainupnp.upnp.util.PORT
+import com.m3sv.plainupnp.upnp.util.addAudioItem
+import com.m3sv.plainupnp.upnp.util.addImageItem
+import com.m3sv.plainupnp.upnp.util.addVideoItem
+import com.m3sv.plainupnp.upnp.util.getLocalIpAddress
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import java.security.SecureRandom
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -39,8 +62,12 @@ class UpnpContentRepositoryImpl @Inject constructor(
 
     private val scope = CoroutineScope(Dispatchers.IO)
     private val appName by lazy { application.getString(R.string.app_name) }
-    private val baseUrl by lazy { "${getLocalIpAddress(application, log).hostAddress}:$PORT" }
+    private val localIpAddress by lazy { getLocalIpAddress(application, log).hostAddress }
+    private val baseUrl: String
+        get() = "$localIpAddress:$PORT"
+
     private val refreshInternal = MutableSharedFlow<Unit>()
+
     private val _refreshState: MutableStateFlow<ContentUpdateState> =
         MutableStateFlow(ContentUpdateState.Ready(containerCache))
 
@@ -493,13 +520,13 @@ class UpnpContentRepositoryImpl @Inject constructor(
                 while (cursor.moveToNext()) {
                     cursor
                         .getString(pathColumn)
-                        .let { path ->
+                        ?.let { path ->
                             when {
                                 path.startsWith("/") -> path.drop(1)
                                 path.endsWith("/") -> path.dropLast(1)
                                 else -> path
                             }
-                        }.also(::add)
+                        }?.also(::add)
                 }
             }
         }.map { it.split("/") }.forEach {

@@ -1,8 +1,9 @@
 package com.m3sv.plainupnp.common.util
 
 import android.app.Activity
-import android.view.inputmethod.InputMethodManager
-import androidx.appcompat.app.AppCompatActivity
+import kotlin.system.exitProcess
 
-val Activity.inputMethodManager: InputMethodManager
-    get() = getSystemService(AppCompatActivity.INPUT_METHOD_SERVICE) as InputMethodManager
+fun Activity.finishApp() {
+    finishAffinity()
+    exitProcess(0)
+}

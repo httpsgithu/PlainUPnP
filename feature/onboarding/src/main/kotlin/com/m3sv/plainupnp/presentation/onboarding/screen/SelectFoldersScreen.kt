@@ -17,11 +17,15 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.m3sv.plainupnp.compose.util.AppTheme
-import com.m3sv.plainupnp.compose.widgets.*
+import com.m3sv.plainupnp.compose.AppTheme
+import com.m3sv.plainupnp.compose.OneContainedButton
+import com.m3sv.plainupnp.compose.OneOutlinedButton
+import com.m3sv.plainupnp.compose.OnePane
+import com.m3sv.plainupnp.compose.OneSubtitle
+import com.m3sv.plainupnp.compose.OneTitle
+import com.m3sv.plainupnp.compose.OneToolbar
 import com.m3sv.plainupnp.data.upnp.UriWrapper
 import com.m3sv.plainupnp.presentation.onboarding.R
-
 
 @Composable
 fun SelectFoldersScreen(
@@ -63,12 +67,14 @@ fun SelectFoldersScreen(
                         state = dismissState,
                         background = {
                             val direction = dismissState.dismissDirection ?: return@SwipeToDismiss
-                            val color by animateColorAsState(targetValue = when (dismissState.targetValue) {
-                                DismissValue.Default -> Color(0xffff4d4d)
-                                DismissValue.DismissedToEnd,
-                                DismissValue.DismissedToStart,
-                                -> Color.Red
-                            })
+                            val color by animateColorAsState(
+                                targetValue = when (dismissState.targetValue) {
+                                    DismissValue.Default -> Color(0xffff4d4d)
+                                    DismissValue.DismissedToEnd,
+                                    DismissValue.DismissedToStart,
+                                    -> Color.Red
+                                }
+                            )
 
                             val alignment = when (direction) {
                                 DismissDirection.StartToEnd -> Alignment.CenterStart
@@ -76,10 +82,11 @@ fun SelectFoldersScreen(
                             }
 
                             val icon = Icons.Default.Delete
-                            val scale by animateFloatAsState(targetValue = if (dismissState.targetValue == DismissValue.Default)
-                                0.75f
-                            else
-                                1f
+                            val scale by animateFloatAsState(
+                                targetValue = if (dismissState.targetValue == DismissValue.Default)
+                                    0.75f
+                                else
+                                    1f
                             )
 
                             Box(

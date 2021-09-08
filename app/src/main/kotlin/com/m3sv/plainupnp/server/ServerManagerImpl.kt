@@ -6,14 +6,14 @@ import com.m3sv.plainupnp.interfaces.LifecycleManager
 import com.m3sv.plainupnp.upnp.android.AndroidUpnpServiceImpl
 import com.m3sv.plainupnp.upnp.server.MediaServer
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import org.fourthline.cling.UpnpService
 import org.fourthline.cling.controlpoint.ControlPoint
-import java.util.concurrent.Executors
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.concurrent.thread
@@ -27,7 +27,7 @@ class ServerManagerImpl @Inject constructor(
     private val controlPoint: ControlPoint
 ) : ServerManager {
 
-    private val scope = CoroutineScope(Executors.newFixedThreadPool(2).asCoroutineDispatcher())
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     private val isServerOn: MutableStateFlow<Boolean> = MutableStateFlow(false)
 

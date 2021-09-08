@@ -7,20 +7,29 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.m3sv.plainupnp.ThemeManager
-import com.m3sv.plainupnp.ThemeOption
-import com.m3sv.plainupnp.applicationmode.ApplicationMode
+import com.m3sv.plainupnp.common.ApplicationMode
+import com.m3sv.plainupnp.common.ThemeManager
+import com.m3sv.plainupnp.common.ThemeOption
 import com.m3sv.plainupnp.common.preferences.PreferencesRepository
 import com.m3sv.plainupnp.common.util.asApplicationMode
 import com.m3sv.plainupnp.common.util.pass
 import com.m3sv.plainupnp.data.upnp.UriWrapper
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.scan
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 private enum class Direction {
-    Forward, Backward
+    FORWARD, BACKWARD
+}
+
+enum class ActivityNotFoundIndicatorState {
+    SHOW, DISMISS
 }
 
 @HiltViewModel
@@ -40,11 +49,13 @@ class OnboardingViewModel @Inject constructor(
         .persistedUrisFlow()
         .stateIn(viewModelScope, SharingStarted.Lazily, preferences.getUris())
 
-    private val _currentScreen: MutableSharedFlow<Direction> = MutableSharedFlow()
+    private val _activityNotFound: MutableSharedFlow<ActivityNotFoundIndicatorState> = MutableSharedFlow()
+    val activityNotFound = _activityNotFound.asSharedFlow()
 
+    private val _currentScreen: MutableSharedFlow<Direction> = MutableSharedFlow()
     val currentScreen: StateFlow<OnboardingScreen> =
         _currentScreen.scan(OnboardingScreen.Greeting) { currentScreen, direction ->
-            if (direction == Direction.Forward) {
+            if (direction == Direction.FORWARD) {
                 when (currentScreen) {
                     OnboardingScreen.SelectPreconfiguredContainers -> {
                         with(preferences) {
@@ -53,14 +64,13 @@ class OnboardingViewModel @Inject constructor(
                             setShareAudio(audioContainerEnabled.value)
                         }
                     }
-                    OnboardingScreen.SelectBackgroundMode -> preferences.setPauseInBackground(pauseInBackground.value)
                     else -> pass
                 }
             }
 
             when (direction) {
-                Direction.Forward -> currentScreen.forward()
-                Direction.Backward -> currentScreen.backward()
+                Direction.FORWARD -> currentScreen.forward()
+                Direction.BACKWARD -> currentScreen.backward()
             }
         }.stateIn(viewModelScope, SharingStarted.Lazily, OnboardingScreen.Greeting)
 
@@ -76,13 +86,13 @@ class OnboardingViewModel @Inject constructor(
 
     fun onNavigateNext() {
         viewModelScope.launch {
-            _currentScreen.emit(Direction.Forward)
+            _currentScreen.emit(Direction.FORWARD)
         }
     }
 
     fun onNavigateBack() {
         viewModelScope.launch {
-            _currentScreen.emit(Direction.Backward)
+            _currentScreen.emit(Direction.BACKWARD)
         }
     }
 
@@ -92,6 +102,18 @@ class OnboardingViewModel @Inject constructor(
 
     fun releaseUri(uriWrapper: UriWrapper) {
         preferences.releaseUri(uriWrapper)
+    }
+
+    fun onActivityNotFound() {
+        viewModelScope.launch {
+            _activityNotFound.emit(ActivityNotFoundIndicatorState.SHOW)
+        }
+    }
+
+    fun dismissActivityNotFound() {
+        viewModelScope.launch {
+            _activityNotFound.emit(ActivityNotFoundIndicatorState.DISMISS)
+        }
     }
 
     private fun OnboardingScreen.forward(): OnboardingScreen = when (this) {
@@ -104,7 +126,6 @@ class OnboardingViewModel @Inject constructor(
         OnboardingScreen.StoragePermission -> OnboardingScreen.SelectPreconfiguredContainers
         OnboardingScreen.SelectPreconfiguredContainers -> OnboardingScreen.SelectDirectories
         OnboardingScreen.SelectDirectories -> OnboardingScreen.Finish
-        OnboardingScreen.SelectBackgroundMode -> OnboardingScreen.Finish
         OnboardingScreen.Finish -> error("Can't navigate from finish screen")
     }
 
@@ -124,7 +145,6 @@ class OnboardingViewModel @Inject constructor(
         OnboardingScreen.StoragePermission -> OnboardingScreen.SelectMode
         OnboardingScreen.SelectPreconfiguredContainers -> OnboardingScreen.SelectMode
         OnboardingScreen.SelectDirectories -> OnboardingScreen.SelectPreconfiguredContainers
-        OnboardingScreen.SelectBackgroundMode -> OnboardingScreen.SelectDirectories
         OnboardingScreen.Finish -> error("Can't navigate from finish screen")
     }
 

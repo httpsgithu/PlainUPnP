@@ -10,7 +10,5 @@ android {
 
         versionCode buildConfig.version.code
         versionName buildConfig.version.name
-
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 }

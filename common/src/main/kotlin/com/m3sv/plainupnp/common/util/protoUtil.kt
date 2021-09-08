@@ -1,6 +1,6 @@
 package com.m3sv.plainupnp.common.util
 
-import com.m3sv.plainupnp.applicationmode.ApplicationMode
+import com.m3sv.plainupnp.common.ApplicationMode
 import com.m3sv.plainupnp.common.preferences.Preferences
 
 fun Preferences.ApplicationMode.asApplicationMode(): ApplicationMode = when (this) {

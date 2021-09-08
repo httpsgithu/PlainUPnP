@@ -4,15 +4,15 @@ import android.app.Application
 import android.content.Context
 import android.content.Intent
 import android.os.StrictMode
-import com.m3sv.plainupnp.core.eventbus.EventBus
-import com.m3sv.plainupnp.core.eventbus.events.ExitApplication
 import com.m3sv.plainupnp.interfaces.LifecycleManager
 import com.m3sv.plainupnp.presentation.main.MainActivity
 import com.m3sv.plainupnp.presentation.splash.SplashActivity
 import com.m3sv.plainupnp.server.ServerManager
 import com.m3sv.plainupnp.upnp.UpnpScopeProvider
 import dagger.hilt.android.HiltAndroidApp
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.asCoroutineDispatcher
 import timber.log.Timber
 import java.util.concurrent.Executors
 import javax.inject.Inject
@@ -52,12 +52,6 @@ class App : Application(), Router, UpnpScopeProvider {
                     .penaltyLog()
                     .build()
             )
-        }
-
-        MainScope().launch {
-            lifecycleManager.doOnFinish {
-                EventBus.post(ExitApplication)
-            }
         }
     }
 

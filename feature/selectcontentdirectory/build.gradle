@@ -20,13 +20,15 @@ android {
 dependencies {
     implementation project(':common')
     implementation project(':upnp')
+    implementation project(':compose')
 
     implementation(libs.androidx.core.ktx)
-    implementation(libs.hilt.android.core)
+    implementation(libs.androidx.lifecycle.extensions)
+    implementation(libs.androidx.lifecycle.ktx.runtime)
     implementation(libs.bundles.cling)
     implementation(libs.bundles.compose)
     implementation(libs.bundles.nanohttpd)
+    implementation(libs.hilt.android.core)
 
     kapt(libs.hilt.compiler)
-
 }

@@ -1,5 +1,0 @@
-apply from: "${rootProject.projectDir}/scripts/android-library.gradle"
-
-dependencies {
-    implementation(libs.compose.material.core)
-}

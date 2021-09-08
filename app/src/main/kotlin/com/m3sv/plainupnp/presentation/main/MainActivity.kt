@@ -22,8 +22,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -39,10 +43,12 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import com.google.accompanist.glide.rememberGlidePainter
 import com.m3sv.plainupnp.R
-import com.m3sv.plainupnp.ThemeManager
-import com.m3sv.plainupnp.compose.util.AppTheme
-import com.m3sv.plainupnp.compose.widgets.LifecycleIndicator
-import com.m3sv.plainupnp.compose.widgets.OneToolbar
+import com.m3sv.plainupnp.common.ThemeManager
+import com.m3sv.plainupnp.common.util.finishApp
+import com.m3sv.plainupnp.compose.AppTheme
+import com.m3sv.plainupnp.compose.LifecycleIndicator
+import com.m3sv.plainupnp.compose.OneToolbar
+import com.m3sv.plainupnp.compose.util.isDarkTheme
 import com.m3sv.plainupnp.data.upnp.UpnpRendererState
 import com.m3sv.plainupnp.interfaces.LifecycleManager
 import com.m3sv.plainupnp.presentation.SpinnerItem
@@ -91,7 +97,7 @@ class MainActivity : ComponentActivity() {
             val isSelectRendererButtonExpanded: Boolean by viewModel.isSelectRendererButtonExpanded.collectAsState()
             val isSelectRendererDialogExpanded: Boolean by viewModel.isSelectRendererDialogExpanded.collectAsState()
             val isSettingsDialogExpanded: Boolean by viewModel.isSettingsDialogExpanded.collectAsState()
-            val currentTheme by themeManager.collectTheme()
+            val currentTheme by themeManager.theme.collectAsState()
             val showControls = upnpState !is UpnpRendererState.Empty
             val configuration = LocalConfiguration.current
 
@@ -204,7 +210,7 @@ class MainActivity : ComponentActivity() {
 
                     val lifecycleState by lifecycleManager.lifecycleState.collectAsState()
 
-                    LifecycleIndicator(lifecycleState = lifecycleState)
+                    LifecycleIndicator(lifecycleState = lifecycleState, ::finishApp)
                 }
             }
         }

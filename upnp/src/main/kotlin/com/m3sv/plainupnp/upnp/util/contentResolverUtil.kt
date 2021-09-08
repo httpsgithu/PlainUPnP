@@ -133,11 +133,11 @@ inline fun ContentResolver.queryAudio(
     )?.use { cursor ->
         val audioIdColumn = cursor.getColumnIndex(MediaStore.Audio.Media._ID)
         val audioTitleColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME)
-        val audioArtistColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)
-        val audioMimeTypeColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.MIME_TYPE)
-        val audioSizeColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.SIZE)
-        val audioDurationColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)
-        val audioAlbumColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM)
+        val audioArtistColumn = cursor.getColumnIndex(MediaStore.Audio.Media.ARTIST)
+        val audioMimeTypeColumn = cursor.getColumnIndex(MediaStore.Audio.Media.MIME_TYPE)
+        val audioSizeColumn = cursor.getColumnIndex(MediaStore.Audio.Media.SIZE)
+        val audioDurationColumn = cursor.getColumnIndex(MediaStore.Audio.Media.DURATION)
+        val audioAlbumColumn = cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM)
 
         while (cursor.moveToNext()) {
             val id = UpnpContentRepositoryImpl.AUDIO_PREFIX + cursor.getInt(audioIdColumn)

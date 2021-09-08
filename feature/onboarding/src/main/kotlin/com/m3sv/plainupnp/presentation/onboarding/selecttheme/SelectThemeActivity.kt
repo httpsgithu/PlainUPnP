@@ -7,9 +7,11 @@ import androidx.compose.material.Surface
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.res.stringResource
-import com.m3sv.plainupnp.ThemeManager
-import com.m3sv.plainupnp.compose.util.AppTheme
-import com.m3sv.plainupnp.compose.widgets.LifecycleIndicator
+import com.m3sv.plainupnp.common.ThemeManager
+import com.m3sv.plainupnp.common.util.finishApp
+import com.m3sv.plainupnp.compose.AppTheme
+import com.m3sv.plainupnp.compose.LifecycleIndicator
+import com.m3sv.plainupnp.compose.util.isDarkTheme
 import com.m3sv.plainupnp.interfaces.LifecycleManager
 import com.m3sv.plainupnp.interfaces.LifecycleState
 import com.m3sv.plainupnp.presentation.onboarding.R
@@ -28,7 +30,7 @@ class SelectThemeActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            val currentTheme by themeManager.collectTheme()
+            val currentTheme by themeManager.theme.collectAsState()
 
             AppTheme(currentTheme.isDarkTheme()) {
                 Surface {
@@ -43,7 +45,7 @@ class SelectThemeActivity : ComponentActivity() {
 
                     val lifecycleState: LifecycleState by lifecycleManager.lifecycleState.collectAsState()
 
-                    LifecycleIndicator(lifecycleState = lifecycleState)
+                    LifecycleIndicator(lifecycleState = lifecycleState, ::finishApp)
                 }
             }
         }

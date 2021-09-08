@@ -2,7 +2,13 @@ package com.m3sv.plainupnp.presentation.onboarding.screen
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Switch
@@ -14,7 +20,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.m3sv.plainupnp.compose.widgets.*
+import com.m3sv.plainupnp.compose.OneContainedButton
+import com.m3sv.plainupnp.compose.OnePane
+import com.m3sv.plainupnp.compose.OneSubtitle
+import com.m3sv.plainupnp.compose.OneTitle
+import com.m3sv.plainupnp.compose.OneToolbar
 import com.m3sv.plainupnp.presentation.onboarding.R
 
 @Composable
@@ -29,9 +39,11 @@ fun SelectPreconfiguredContainersScreen(
         OneTitle(text = stringResource(id = R.string.select_precofigured_containers_title))
         OneToolbar(onBackClick = onBackClick) {}
     }) {
-        Column(Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())) {
+        Column(
+            Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+        ) {
             OneSubtitle(
                 text = "You can select custom directories in the next step",
                 Modifier
@@ -60,9 +72,10 @@ fun SelectPreconfiguredContainersScreen(
 
             Spacer(modifier = Modifier.weight(1f))
 
-            Row(Modifier
-                .padding(horizontal = 24.dp)
-                .padding(bottom = 24.dp)
+            Row(
+                Modifier
+                    .padding(horizontal = 24.dp)
+                    .padding(bottom = 24.dp)
             ) {
                 OneContainedButton(
                     text = stringResource(id = R.string.next),

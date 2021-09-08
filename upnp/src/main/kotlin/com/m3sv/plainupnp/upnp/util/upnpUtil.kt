@@ -4,9 +4,19 @@ import android.content.Context
 import android.net.wifi.WifiManager
 import com.m3sv.plainupnp.logging.Log
 import timber.log.Timber
-import java.net.*
+import java.net.Inet4Address
+import java.net.InetAddress
+import java.net.InetSocketAddress
+import java.net.NetworkInterface
+import java.net.ServerSocket
+import java.net.UnknownHostException
 
-const val PORT = 8192
+val PORT by lazy {
+    val socket = ServerSocket(0)
+    val port = socket.localPort
+    socket.close()
+    port
+}
 
 private fun getLocalIpAddressFromIntf(intfName: String): InetAddress? {
     try {

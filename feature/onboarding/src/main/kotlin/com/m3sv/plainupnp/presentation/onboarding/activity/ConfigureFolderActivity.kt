@@ -9,12 +9,15 @@ import androidx.activity.viewModels
 import androidx.compose.material.Surface
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import com.m3sv.plainupnp.ThemeManager
-import com.m3sv.plainupnp.compose.util.AppTheme
-import com.m3sv.plainupnp.compose.widgets.LifecycleIndicator
+import com.m3sv.plainupnp.common.ThemeManager
+import com.m3sv.plainupnp.common.util.finishApp
+import com.m3sv.plainupnp.compose.AppTheme
+import com.m3sv.plainupnp.compose.LifecycleIndicator
+import com.m3sv.plainupnp.compose.util.isDarkTheme
 import com.m3sv.plainupnp.data.upnp.UriWrapper
 import com.m3sv.plainupnp.interfaces.LifecycleManager
 import com.m3sv.plainupnp.interfaces.LifecycleState
+import com.m3sv.plainupnp.presentation.onboarding.ActivityNotFoundIndicatorState
 import com.m3sv.plainupnp.presentation.onboarding.OnboardingViewModel
 import com.m3sv.plainupnp.presentation.onboarding.screen.SelectFoldersScreen
 import dagger.hilt.android.AndroidEntryPoint
@@ -35,7 +38,8 @@ class ConfigureFolderActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             val contentUris: List<UriWrapper> by viewModel.contentUris.collectAsState()
-            val theme by themeManager.collectTheme()
+            val theme by themeManager.theme.collectAsState()
+            val activityNotFound: ActivityNotFoundIndicatorState by viewModel.activityNotFound.collectAsState(initial = ActivityNotFoundIndicatorState.DISMISS)
 
             AppTheme(theme.isDarkTheme()) {
                 Surface {
@@ -48,21 +52,22 @@ class ConfigureFolderActivity : ComponentActivity() {
 
                     val lifecycleState: LifecycleState by lifecycleManager.lifecycleState.collectAsState()
 
-                    LifecycleIndicator(lifecycleState = lifecycleState)
+                    LifecycleIndicator(lifecycleState = lifecycleState, ::finishApp)
                 }
             }
         }
     }
 
     private fun openDirectory() {
-        // Choose a directory using the system's file picker.
-        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
-            // Provide read access to files and sub-directories in the user-selected
-            // directory.
-            flags = DIRECTORY_PERMISSIONS
-        }
+        runCatching {// Choose a directory using the system's file picker.
+            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
+                // Provide read access to files and sub-directories in the user-selected
+                // directory.
+                flags = DIRECTORY_PERMISSIONS
+            }
 
-        startActivityForResult(intent, REQUEST_DIRECTORY_CODE)
+            startActivityForResult(intent, REQUEST_DIRECTORY_CODE)
+        }.onFailure { viewModel.onActivityNotFound() }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {

@@ -21,14 +21,19 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
-import com.m3sv.plainupnp.ThemeManager
-import com.m3sv.plainupnp.ThemeOption
+import com.m3sv.plainupnp.common.ThemeManager
+import com.m3sv.plainupnp.common.ThemeOption
 import com.m3sv.plainupnp.common.preferences.Preferences
 import com.m3sv.plainupnp.common.preferences.PreferencesRepository
 import com.m3sv.plainupnp.common.util.asApplicationMode
+import com.m3sv.plainupnp.common.util.finishApp
 import com.m3sv.plainupnp.common.util.pass
-import com.m3sv.plainupnp.compose.util.AppTheme
-import com.m3sv.plainupnp.compose.widgets.*
+import com.m3sv.plainupnp.compose.AppTheme
+import com.m3sv.plainupnp.compose.LifecycleIndicator
+import com.m3sv.plainupnp.compose.OnePane
+import com.m3sv.plainupnp.compose.OneTitle
+import com.m3sv.plainupnp.compose.OneToolbar
+import com.m3sv.plainupnp.compose.util.isDarkTheme
 import com.m3sv.plainupnp.interfaces.LifecycleManager
 import com.m3sv.plainupnp.presentation.onboarding.activity.ConfigureFolderActivity
 import com.m3sv.plainupnp.presentation.onboarding.selecttheme.SelectThemeActivity
@@ -58,7 +63,7 @@ class SettingsActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             val preferences by preferencesRepository.preferences.collectAsState()
-            val currentTheme by themeManager.collectTheme()
+            val currentTheme by themeManager.theme.collectAsState()
 
             AppTheme(currentTheme.isDarkTheme()) {
                 Surface {
@@ -77,7 +82,7 @@ class SettingsActivity : ComponentActivity() {
 
                 val lifecycleState by lifecycleManager.lifecycleState.collectAsState()
 
-                LifecycleIndicator(lifecycleState = lifecycleState)
+                LifecycleIndicator(lifecycleState = lifecycleState, ::finishApp)
             }
         }
     }

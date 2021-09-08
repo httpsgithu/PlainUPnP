@@ -13,21 +13,28 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.animation.Crossfade
 import androidx.compose.material.Surface
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
 import androidx.core.app.ActivityCompat
-import com.m3sv.plainupnp.ThemeManager
-import com.m3sv.plainupnp.ThemeOption
-import com.m3sv.plainupnp.applicationmode.ApplicationMode
-import com.m3sv.plainupnp.applicationmode.SelectApplicationModeScreen
+import com.m3sv.plainupnp.common.ApplicationMode
+import com.m3sv.plainupnp.common.ThemeManager
+import com.m3sv.plainupnp.common.ThemeOption
 import com.m3sv.plainupnp.common.util.pass
-import com.m3sv.plainupnp.compose.util.AppTheme
+import com.m3sv.plainupnp.compose.AppTheme
+import com.m3sv.plainupnp.compose.GreetingScreen
+import com.m3sv.plainupnp.compose.SelectApplicationModeScreen
+import com.m3sv.plainupnp.compose.util.isDarkTheme
 import com.m3sv.plainupnp.data.upnp.UriWrapper
 import com.m3sv.plainupnp.presentation.onboarding.OnboardingManager
 import com.m3sv.plainupnp.presentation.onboarding.OnboardingScreen
 import com.m3sv.plainupnp.presentation.onboarding.OnboardingViewModel
 import com.m3sv.plainupnp.presentation.onboarding.R
-import com.m3sv.plainupnp.presentation.onboarding.screen.GreetingScreen
 import com.m3sv.plainupnp.presentation.onboarding.screen.SelectFoldersScreen
 import com.m3sv.plainupnp.presentation.onboarding.screen.SelectPreconfiguredContainersScreen
 import com.m3sv.plainupnp.presentation.onboarding.screen.StoragePermissionScreen
@@ -71,7 +78,7 @@ class OnboardingActivity : ComponentActivity() {
 
         val contentUris by viewModel.contentUris.collectAsState()
         val currentScreen by viewModel.currentScreen.collectAsState()
-        val currentTheme by themeManager.collectTheme()
+        val currentTheme by themeManager.theme.collectAsState()
 
         val imageContainerEnabled = remember { viewModel.imageContainerEnabled }
         val videoContainerEnabled = remember { viewModel.videoContainerEnabled }
@@ -148,14 +155,6 @@ class OnboardingActivity : ComponentActivity() {
                             onNext = onNextClick,
                             onReleaseUri = viewModel::releaseUri,
                         )
-
-                        OnboardingScreen.SelectBackgroundMode -> pass
-//                        SelectBackgroundModeScreen(
-//                        backgroundMode = backgroundMode,
-//                        onBackClick = onBackClick,
-//                        onNextClick = onNextClick
-//                    ) { stringProvider(it.resourceId) }
-
                         OnboardingScreen.Finish -> finishOnboarding()
                     }
                 }
