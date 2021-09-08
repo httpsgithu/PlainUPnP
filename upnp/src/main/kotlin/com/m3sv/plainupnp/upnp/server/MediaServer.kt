@@ -1,7 +1,10 @@
 package com.m3sv.plainupnp.upnp.server
 
+import android.app.Activity
 import android.app.Application
 import android.content.ContentUris
+import android.net.ConnectivityManager
+import android.net.LinkProperties
 import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
@@ -68,7 +71,7 @@ class MediaServer @Inject constructor(
         Timber.i("Headers: ${session.headers}")
 
         serveFile(
-            obj.id.toString(),
+            obj.id,
             session.headers,
             obj.inputStream,
             obj.mime
@@ -90,6 +93,28 @@ class MediaServer @Inject constructor(
             stream.available().toLong()
         )
     }
+
+    override fun start() {
+        super.start()
+        logger.d("Starting server at http://${getDefaultIpAddresses(application.getSystemService(Activity.CONNECTIVITY_SERVICE) as ConnectivityManager)}:$PORT")
+    }
+
+    // Ignore older versions, we're getting rid of them in the future anyway
+    private fun getDefaultIpAddresses(cm: ConnectivityManager): String? {
+        val prop = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            cm.getLinkProperties(cm.activeNetwork)
+        } else {
+            null
+        } ?: return null
+
+        return formatIpAddresses(prop)
+    }
+
+    private fun formatIpAddresses(prop: LinkProperties): String? = prop
+        .linkAddresses
+        .find { linkAddress -> linkAddress.address.hostAddress.contains("192.168") }
+        ?.address
+        ?.hostAddress
 
     inner class InvalidIdentifierException(message: String) : java.lang.Exception(message)
 
