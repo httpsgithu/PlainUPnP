@@ -25,7 +25,7 @@ package com.m3sv.plainupnp.upnp.mediacontainers
 
 import android.content.ContentResolver
 import android.provider.MediaStore
-import com.m3sv.plainupnp.logging.Log
+import com.m3sv.plainupnp.logging.Logger
 import org.fourthline.cling.support.model.container.Container
 
 class ArtistContainer(
@@ -33,7 +33,7 @@ class ArtistContainer(
     parentID: String,
     title: String,
     creator: String,
-    private val log: Log,
+    private val logger: Logger,
     private val baseUrl: String,
     private val contentResolver: ContentResolver
 ) : BaseContainer(
@@ -86,7 +86,7 @@ class ArtistContainer(
                             id,
                             artist,
                             artist,
-                            log,
+                            logger,
                             baseUrl,
                             contentResolver,
                             artistId

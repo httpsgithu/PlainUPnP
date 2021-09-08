@@ -1,6 +1,6 @@
 package com.m3sv.plainupnp.upnp.actions.renderingcontrol
 
-import com.m3sv.plainupnp.logging.Log
+import com.m3sv.plainupnp.logging.Logger
 import com.m3sv.plainupnp.upnp.actions.Action
 import org.fourthline.cling.controlpoint.ControlPoint
 import org.fourthline.cling.model.action.ActionInvocation
@@ -11,7 +11,7 @@ import javax.inject.Inject
 
 class MuteVolumeAction @Inject constructor(
     controlPoint: ControlPoint,
-    private val log: Log
+    private val logger: Logger
 ) :
     Action<Unit, Unit>(controlPoint) {
 
@@ -34,7 +34,7 @@ class MuteVolumeAction @Inject constructor(
                 operation: UpnpResponse?,
                 defaultMsg: String?
             ) {
-                log.e("Failed to mute volume")
+                logger.e("Failed to mute volume")
             }
         }
         controlPoint.execute(action)

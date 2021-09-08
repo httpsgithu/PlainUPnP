@@ -5,7 +5,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class Logger @Inject constructor() : Log {
+class DefaultLogger @Inject constructor() : Logger {
 
     override fun e(e: Throwable, message: String?, remote: Boolean) {
         Timber.e(e, message)

@@ -6,7 +6,7 @@ import com.m3sv.plainupnp.data.upnp.DeviceDisplay
 import com.m3sv.plainupnp.data.upnp.UpnpDevice
 import com.m3sv.plainupnp.data.upnp.UpnpItemType
 import com.m3sv.plainupnp.data.upnp.UpnpRendererState
-import com.m3sv.plainupnp.logging.Log
+import com.m3sv.plainupnp.logging.Logger
 import com.m3sv.plainupnp.presentation.SpinnerItem
 import com.m3sv.plainupnp.upnp.CDevice
 import com.m3sv.plainupnp.upnp.ContentUpdateState
@@ -50,13 +50,13 @@ sealed interface Result {
 }
 
 class UpnpManagerImpl @Inject constructor(
-        private val rendererDiscoveryObservable: RendererDiscoveryObservable,
-        private val contentDirectoryObservable: ContentDirectoryDiscoveryObservable,
-        private val launchLocally: LaunchLocallyUseCase,
-        private val upnpRepository: UpnpRepository,
-        private val volumeRepository: VolumeRepository,
-        private val contentRepository: UpnpContentRepositoryImpl,
-        private val log: Log
+    private val rendererDiscoveryObservable: RendererDiscoveryObservable,
+    private val contentDirectoryObservable: ContentDirectoryDiscoveryObservable,
+    private val launchLocally: LaunchLocallyUseCase,
+    private val upnpRepository: UpnpRepository,
+    private val volumeRepository: VolumeRepository,
+    private val contentRepository: UpnpContentRepositoryImpl,
+    private val logger: Logger
 ) : UpnpManager {
     override val volumeFlow: Flow<Int> = volumeRepository.volumeFlow
 
@@ -289,7 +289,7 @@ class UpnpManagerImpl @Inject constructor(
         withContext(Dispatchers.IO) {
             runCatching {
                 avService?.let { service -> upnpRepository.pause(service) }
-            }.onFailure { log.e(it, "Failed to pause playback") }
+            }.onFailure { logger.e(it, "Failed to pause playback") }
         }
     }
 
@@ -297,7 +297,7 @@ class UpnpManagerImpl @Inject constructor(
         withContext(Dispatchers.IO) {
             runCatching {
                 avService?.let { service -> upnpRepository.stop(service) }
-            }.onFailure { log.e(it, "Failed to stop playback") }
+            }.onFailure { logger.e(it, "Failed to stop playback") }
         }
     }
 
@@ -305,7 +305,7 @@ class UpnpManagerImpl @Inject constructor(
         withContext(Dispatchers.IO) {
             runCatching {
                 avService?.let { service -> upnpRepository.play(service) }
-            }.onFailure { log.e(it, "Failed to resume playback") }
+            }.onFailure { logger.e(it, "Failed to resume playback") }
         }
     }
 
@@ -315,16 +315,16 @@ class UpnpManagerImpl @Inject constructor(
                 avService?.let { service ->
                     pauseUpdate = true
                     upnpRepository.seekTo(
-                            service = service,
-                            time = formatTime(
-                                    max = MAX_PROGRESS,
-                                    progress = progress,
-                                    duration = currentDuration
-                            )
+                        service = service,
+                        time = formatTime(
+                            max = MAX_PROGRESS,
+                            progress = progress,
+                            duration = currentDuration
+                        )
                     )
                     pauseUpdate = false
                 }
-            }.onFailure { log.e(it, "Failed to seek progress $progress") }
+            }.onFailure { logger.e(it, "Failed to seek progress $progress") }
         }
     }
 
@@ -332,7 +332,7 @@ class UpnpManagerImpl @Inject constructor(
         withContext(Dispatchers.IO) {
             runCatching {
                 withRcService { service -> volumeRepository.raiseVolume(service, step) }
-            }.onFailure { log.e(it, "Failed to raise volume with step $step") }
+            }.onFailure { logger.e(it, "Failed to raise volume with step $step") }
         }
     }
 
@@ -340,7 +340,7 @@ class UpnpManagerImpl @Inject constructor(
         withContext(Dispatchers.IO) {
             runCatching {
                 withRcService { service -> volumeRepository.lowerVolume(service, step) }
-            }.onFailure { log.e(it, "Failed to lower volume with step $step") }
+            }.onFailure { logger.e(it, "Failed to lower volume with step $step") }
         }
     }
 
@@ -348,7 +348,7 @@ class UpnpManagerImpl @Inject constructor(
         withContext(Dispatchers.IO) {
             runCatching {
                 withRcService { service -> volumeRepository.muteVolume(service, mute) }
-            }.onFailure { log.e(it, "Failed to mute volume $mute") }
+            }.onFailure { logger.e(it, "Failed to mute volume $mute") }
         }
     }
 
@@ -356,14 +356,14 @@ class UpnpManagerImpl @Inject constructor(
         withContext(Dispatchers.IO) {
             runCatching {
                 withRcService { service -> volumeRepository.setVolume(service, volume) }
-            }.onFailure { log.e(it, "Failed to set volume with value $volume") }
+            }.onFailure { logger.e(it, "Failed to set volume with value $volume") }
         }
     }
 
     override suspend fun getVolume(): Int = withContext(Dispatchers.IO) {
         val result = runCatching {
             withRcService { service -> volumeRepository.getVolume(service) } ?: 0
-        }.onFailure { log.e(it, "Failed to get volume") }
+        }.onFailure { logger.e(it, "Failed to get volume") }
 
         if (result.isSuccess)
             result.getOrThrow()
@@ -376,7 +376,7 @@ class UpnpManagerImpl @Inject constructor(
             val index = folderStack.value.indexOf(folder)
 
             if (index == -1) {
-                log.e("Folder $folder isn't found in navigation stack!")
+                logger.e("Folder $folder isn't found in navigation stack!")
                 return@withContext
             }
 
@@ -397,7 +397,7 @@ class UpnpManagerImpl @Inject constructor(
                     else
                         upnpRepository.pause(service)
                 }
-            }.onFailure { log.e(it, "Failed to toggle playback, is remote paused? $remotePaused") }
+            }.onFailure { logger.e(it, "Failed to toggle playback, is remote paused? $remotePaused") }
         }
     }
 
@@ -423,7 +423,7 @@ class UpnpManagerImpl @Inject constructor(
         val selectedDevice = contentDirectoryObservable.selectedContentDirectory
 
         if (selectedDevice == null) {
-            log.e("Selected content directory is null!")
+            logger.e("Selected content directory is null!")
             Result.Error.GENERIC
         }
         val service: Service<*, *>? =
@@ -508,7 +508,7 @@ class UpnpManagerImpl @Inject constructor(
     private suspend fun <T> withAvService(block: suspend (Service<*, *>) -> T): T? {
         return when (val avService = avService) {
             null -> {
-                log.e("Av service is not found!")
+                logger.e("Av service is not found!")
                 null
             }
             else -> block(avService)
@@ -518,7 +518,7 @@ class UpnpManagerImpl @Inject constructor(
     private suspend fun <T> withRcService(block: suspend (Service<*, *>) -> T): T? {
         return when (val rcService = rcService) {
             null -> {
-                log.e("Rc service is not found!")
+                logger.e("Rc service is not found!")
                 null
             }
             else -> block(rcService)

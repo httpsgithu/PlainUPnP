@@ -1,6 +1,6 @@
 package com.m3sv.plainupnp.di
 
-import com.m3sv.plainupnp.logging.Log
+import com.m3sv.plainupnp.logging.DefaultLogger
 import com.m3sv.plainupnp.logging.Logger
 import dagger.Binds
 import dagger.Module
@@ -12,5 +12,5 @@ import dagger.hilt.components.SingletonComponent
 interface CommonModule {
 
     @Binds
-    fun bindLogger(logger: Logger): Log
+    fun bindLogger(logger: DefaultLogger): Logger
 }

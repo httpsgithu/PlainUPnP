@@ -2,13 +2,13 @@ package com.m3sv.plainupnp.upnp.resourceproviders
 
 import android.app.Application
 import android.content.pm.PackageManager
-import com.m3sv.plainupnp.logging.Log
+import com.m3sv.plainupnp.logging.Logger
 import com.m3sv.plainupnp.upnp.R
 import javax.inject.Inject
 
 class LocalServiceResourceProvider @Inject constructor(
     private val application: Application,
-    private val log: Log
+    private val logger: Logger
 ) {
     val appName: String = application.getString(R.string.app_name)
     val appUrl: String = application.getString(R.string.app_url)
@@ -22,7 +22,7 @@ class LocalServiceResourceProvider @Inject constructor(
             try {
                 result = application.packageManager.getPackageInfo(application.packageName, 0).versionName
             } catch (e: PackageManager.NameNotFoundException) {
-                log.e("Couldn't find application version")
+                logger.e("Couldn't find application version")
             }
             return result
         }

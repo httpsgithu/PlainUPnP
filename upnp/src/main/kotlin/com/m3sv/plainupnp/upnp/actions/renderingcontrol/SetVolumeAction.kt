@@ -1,6 +1,6 @@
 package com.m3sv.plainupnp.upnp.actions.renderingcontrol
 
-import com.m3sv.plainupnp.logging.Log
+import com.m3sv.plainupnp.logging.Logger
 import com.m3sv.plainupnp.upnp.actions.Action
 import org.fourthline.cling.controlpoint.ControlPoint
 import org.fourthline.cling.model.action.ActionInvocation
@@ -14,7 +14,7 @@ import kotlin.coroutines.suspendCoroutine
 
 class SetVolumeAction @Inject constructor(
     controlPoint: ControlPoint,
-    private val log: Log
+    private val logger: Logger
 ) :
     Action<Unit, Unit>(controlPoint) {
 
@@ -34,7 +34,7 @@ class SetVolumeAction @Inject constructor(
                     operation: UpnpResponse?,
                     defaultMsg: String?
                 ) {
-                    log.e("Failed to raise volume")
+                    logger.e("Failed to raise volume")
                     continuation.resume(volume)
                 }
 

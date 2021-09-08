@@ -7,7 +7,7 @@ import android.os.Build
 import android.provider.MediaStore
 import com.m3sv.plainupnp.ContentModel
 import com.m3sv.plainupnp.ContentRepository
-import com.m3sv.plainupnp.logging.Log
+import com.m3sv.plainupnp.logging.Logger
 import com.m3sv.plainupnp.upnp.UpnpContentRepositoryImpl.Companion.AUDIO_PREFIX
 import com.m3sv.plainupnp.upnp.UpnpContentRepositoryImpl.Companion.IMAGE_PREFIX
 import com.m3sv.plainupnp.upnp.UpnpContentRepositoryImpl.Companion.TREE_PREFIX
@@ -29,7 +29,7 @@ import javax.inject.Singleton
 @Singleton
 class MediaServer @Inject constructor(
     private val application: Application,
-    private val log: Log,
+    private val logger: Logger,
     private val contentRepository: ContentRepository,
 ) : SimpleInputStreamServer(null, PORT, listOf(), true) {
 
@@ -117,10 +117,10 @@ class MediaServer @Inject constructor(
             }
 
         } catch (e: Exception) {
-            log.e(e, "Error while parsing $uri")
+            logger.e(e, "Error while parsing $uri")
         }
 
-        throw InvalidIdentifierException("$uri was not found in media database").apply(log::e)
+        throw InvalidIdentifierException("$uri was not found in media database").apply(logger::e)
     }
 
     private fun getTreeResponse(mediaId: String): ServerObject {

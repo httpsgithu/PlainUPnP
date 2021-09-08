@@ -1,6 +1,6 @@
 package com.m3sv.plainupnp.upnp.actions.avtransport
 
-import com.m3sv.plainupnp.logging.Log
+import com.m3sv.plainupnp.logging.Logger
 import com.m3sv.plainupnp.upnp.trackmetadata.TrackMetadata
 import org.fourthline.cling.controlpoint.ControlPoint
 import org.fourthline.cling.model.action.ActionInvocation
@@ -12,7 +12,7 @@ import javax.inject.Inject
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
-class SetUriAction @Inject constructor(private val controlPoint: ControlPoint, private val log: Log) {
+class SetUriAction @Inject constructor(private val controlPoint: ControlPoint, private val logger: Logger) {
 
     suspend fun setUri(
         service: Service<*, *>,
@@ -21,7 +21,7 @@ class SetUriAction @Inject constructor(private val controlPoint: ControlPoint, p
     ): Boolean = suspendCoroutine { continuation ->
         val tag = "AV"
         Timber.tag(tag).d("Set uri: $uri")
-        val action = object : SetAVTransportURI(service, uri, trackMetadata.getXml(log)) {
+        val action = object : SetAVTransportURI(service, uri, trackMetadata.getXml(logger)) {
 
             override fun success(invocation: ActionInvocation<out Service<*, *>>?) {
                 Timber.tag(tag).d("Set uri: $uri success")

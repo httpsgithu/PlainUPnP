@@ -5,7 +5,7 @@ import android.content.Context
 import com.m3sv.plainupnp.common.ApplicationMode
 import com.m3sv.plainupnp.common.preferences.PreferencesRepository
 import com.m3sv.plainupnp.common.util.asApplicationMode
-import com.m3sv.plainupnp.logging.Log
+import com.m3sv.plainupnp.logging.Logger
 import com.m3sv.plainupnp.upnp.ContentDirectoryService
 import com.m3sv.plainupnp.upnp.PlainUpnpServiceConfiguration
 import com.m3sv.plainupnp.upnp.R
@@ -48,7 +48,7 @@ class AndroidUpnpServiceImpl @Inject constructor(
     application: Application,
     resourceProvider: LocalServiceResourceProvider,
     contentRepository: UpnpContentRepositoryImpl,
-    private val log: Log,
+    private val logger: Logger,
     private val preferencesRepository: PreferencesRepository,
 ) : UpnpService {
 
@@ -79,7 +79,7 @@ class AndroidUpnpServiceImpl @Inject constructor(
                             ApplicationMode.Player -> registry.removeDevice(localDevice)
                         }
                     } catch (e: Exception) {
-                        log.e(e)
+                        logger.e(e)
                     }
                 }
         }
@@ -125,7 +125,7 @@ class AndroidUpnpServiceImpl @Inject constructor(
             if (preferencesRepository.isStreaming) {
                 registry.addDevice(localDevice)
             }
-        }.onFailure(log::e)
+        }.onFailure(logger::e)
     }
 
     fun removeLocalDevice() {
@@ -135,7 +135,7 @@ class AndroidUpnpServiceImpl @Inject constructor(
             if (preferencesRepository.isStreaming) {
                 registry.removeDevice(localDevice)
             }
-        }.onFailure(log::e)
+        }.onFailure(logger::e)
     }
 
     private fun getLocalDevice(
@@ -162,7 +162,7 @@ class AndroidUpnpServiceImpl @Inject constructor(
         val validationErrors = details.validate()
 
         for (error in validationErrors) {
-            log.e("Validation pb for property ${error.propertyName}, error is ${error.message}")
+            logger.e("Validation pb for property ${error.propertyName}, error is ${error.message}")
         }
 
         val type = UDADeviceType("MediaServer", 1)
@@ -198,7 +198,7 @@ class AndroidUpnpServiceImpl @Inject constructor(
         ).also { serviceManager ->
             (serviceManager.implementation as ContentDirectoryService).let { service ->
                 service.contentRepository = contentRepository
-                service.log = log
+                service.logger = logger
             }
         }
 
@@ -216,9 +216,9 @@ class AndroidUpnpServiceImpl @Inject constructor(
         } catch (var3: RouterException) {
             val cause = Exceptions.unwrap(var3)
             if (cause is InterruptedException) {
-                log.e(cause, "Router shutdown was interrupted: ${var3.stackTrace}")
+                logger.e(cause, "Router shutdown was interrupted: ${var3.stackTrace}")
             } else {
-                log.e(cause, "Router error on shutdown: $var3")
+                logger.e(cause, "Router error on shutdown: $var3")
             }
         }
     }

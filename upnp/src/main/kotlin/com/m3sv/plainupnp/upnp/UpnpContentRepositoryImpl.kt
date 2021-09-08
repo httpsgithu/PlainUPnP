@@ -9,7 +9,7 @@ import androidx.documentfile.provider.DocumentFile
 import com.m3sv.plainupnp.ContentModel
 import com.m3sv.plainupnp.ContentRepository
 import com.m3sv.plainupnp.common.preferences.PreferencesRepository
-import com.m3sv.plainupnp.logging.Log
+import com.m3sv.plainupnp.logging.Logger
 import com.m3sv.plainupnp.upnp.mediacontainers.AlbumContainer
 import com.m3sv.plainupnp.upnp.mediacontainers.AllAudioContainer
 import com.m3sv.plainupnp.upnp.mediacontainers.AllImagesContainer
@@ -53,7 +53,7 @@ sealed class ContentUpdateState {
 class UpnpContentRepositoryImpl @Inject constructor(
     private val application: Application,
     private val preferencesRepository: PreferencesRepository,
-    private val log: Log
+    private val logger: Logger
 ) : ContentRepository {
 
     val containerCache: MutableMap<Long, BaseContainer> = mutableMapOf()
@@ -62,7 +62,7 @@ class UpnpContentRepositoryImpl @Inject constructor(
 
     private val scope = CoroutineScope(Dispatchers.IO)
     private val appName by lazy { application.getString(R.string.app_name) }
-    private val localIpAddress by lazy { getLocalIpAddress(application, log).hostAddress }
+    private val localIpAddress by lazy { getLocalIpAddress(application, logger).hostAddress }
     private val baseUrl: String
         get() = "$localIpAddress:$PORT"
 
@@ -163,7 +163,7 @@ class UpnpContentRepositoryImpl @Inject constructor(
         parentID = parentId,
         title = "",
         creator = appName,
-        log = log,
+        logger = logger,
         baseUrl = baseUrl,
         contentResolver = application.contentResolver,
         artistId = artistId
@@ -253,7 +253,7 @@ class UpnpContentRepositoryImpl @Inject constructor(
                 AUDIO_ID.toString(),
                 application.getString(R.string.artist),
                 appName,
-                log,
+                logger,
                 baseUrl,
                 application.contentResolver
             ).also { container ->
@@ -266,7 +266,7 @@ class UpnpContentRepositoryImpl @Inject constructor(
                 parentID = AUDIO_ID.toString(),
                 title = application.getString(R.string.album),
                 creator = appName,
-                log = log,
+                logger = logger,
                 baseUrl = baseUrl,
                 contentResolver = application.contentResolver,
                 artistId = null

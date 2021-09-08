@@ -1,7 +1,7 @@
 package com.m3sv.plainupnp.upnp.trackmetadata
 
 import android.util.Xml
-import com.m3sv.plainupnp.logging.Log
+import com.m3sv.plainupnp.logging.Logger
 import org.xmlpull.v1.XmlSerializer
 import timber.log.Timber
 import java.io.StringWriter
@@ -35,7 +35,7 @@ class TrackMetadata() {
     }
 
     //start a tag called "root"
-    fun getXml(log: Log): String {
+    fun getXml(logger: Logger): String {
         val serializer: XmlSerializer = Xml.newSerializer()
         val stringWriter = StringWriter()
 
@@ -91,7 +91,7 @@ class TrackMetadata() {
                 endDocument()
                 flush()
             } catch (e: Exception) {
-                log.e(e)
+                logger.e(e)
             }
         }
 
