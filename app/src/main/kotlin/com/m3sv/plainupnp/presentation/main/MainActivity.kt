@@ -101,10 +101,6 @@ class MainActivity : ComponentActivity() {
             val showControls = upnpState !is UpnpRendererState.Empty
             val configuration = LocalConfiguration.current
 
-            fun clearFilterText() {
-                viewModel.filterInput("")
-            }
-
             fun collapseExpandedButton() {
                 lifecycleScope.launch { viewModel.collapseSelectRendererButton() }
                 viewModel.collapseSelectRendererDialog()
@@ -130,7 +126,7 @@ class MainActivity : ComponentActivity() {
                         onValueChange = { viewModel.filterInput(it) },
                     ) {
                         showFilter = false
-                        clearFilterText()
+                        viewModel.clearFilterText()
                     }
                 }
             }
@@ -160,7 +156,7 @@ class MainActivity : ComponentActivity() {
                         showFilter = !showFilter
 
                         if (!showFilter) {
-                            clearFilterText()
+                            viewModel.clearFilterText()
                         }
                     })
             }
@@ -373,6 +369,14 @@ class MainActivity : ComponentActivity() {
     ) {
         when (contents) {
             is FolderContents.Contents -> {
+                if (contents.items.isEmpty())
+                    Text(
+                        text = "Oops, nothing to see here", modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 24.dp)
+                            .padding(top = 8.dp)
+                    )
+
                 LazyColumn(modifier = modifier) {
                     items(contents.items) { item ->
                         Row(
@@ -381,9 +385,7 @@ class MainActivity : ComponentActivity() {
                                 .fillMaxWidth()
                                 .clickable { viewModel.itemClick(item.id) }
                         ) {
-                            Spacer(
-                                modifier = Modifier.padding(8.dp)
-                            )
+                            Spacer(modifier = Modifier.padding(8.dp))
                             val imageModifier = Modifier.size(32.dp)
                             when (item.type) {
                                 ItemType.CONTAINER -> {

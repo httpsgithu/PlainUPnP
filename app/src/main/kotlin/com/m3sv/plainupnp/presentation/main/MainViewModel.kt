@@ -208,6 +208,9 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    fun clearFilterText() {
+        filterInput("")
+    }
 
     companion object {
         private const val HIDE_VOLUME_INDICATOR_DELAY: Long = 2500
