@@ -3,10 +3,12 @@ ext.flavorConfig = {
     productFlavors {
         oss {
             dimension "store"
+            rootProject.ext.isPlay = false
         }
 
         play {
             dimension "store"
+            rootProject.ext.isPlay = true
         }
     }
 }
