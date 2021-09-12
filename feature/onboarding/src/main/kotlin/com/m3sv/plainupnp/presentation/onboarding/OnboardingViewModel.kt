@@ -16,9 +16,10 @@ import com.m3sv.plainupnp.common.util.pass
 import com.m3sv.plainupnp.data.upnp.UriWrapper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -49,8 +50,10 @@ class OnboardingViewModel @Inject constructor(
         .persistedUrisFlow()
         .stateIn(viewModelScope, SharingStarted.Lazily, preferences.getUris())
 
-    private val _activityNotFound: MutableSharedFlow<ActivityNotFoundIndicatorState> = MutableSharedFlow()
-    val activityNotFound = _activityNotFound.asSharedFlow()
+    private val _activityNotFound: MutableStateFlow<ActivityNotFoundIndicatorState> =
+        MutableStateFlow(ActivityNotFoundIndicatorState.DISMISS)
+
+    val activityNotFound = _activityNotFound.asStateFlow()
 
     private val _currentScreen: MutableSharedFlow<Direction> = MutableSharedFlow()
     val currentScreen: StateFlow<OnboardingScreen> =

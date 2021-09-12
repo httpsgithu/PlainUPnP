@@ -6,12 +6,16 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.animation.Crossfade
 import androidx.compose.material.Surface
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import com.m3sv.plainupnp.common.ThemeManager
 import com.m3sv.plainupnp.common.util.finishApp
+import com.m3sv.plainupnp.common.util.pass
+import com.m3sv.plainupnp.compose.ActivityNotFoundIndicator
 import com.m3sv.plainupnp.compose.AppTheme
+import com.m3sv.plainupnp.compose.FadedBackground
 import com.m3sv.plainupnp.compose.LifecycleIndicator
 import com.m3sv.plainupnp.compose.util.isDarkTheme
 import com.m3sv.plainupnp.data.upnp.UriWrapper
@@ -39,7 +43,8 @@ class ConfigureFolderActivity : ComponentActivity() {
         setContent {
             val contentUris: List<UriWrapper> by viewModel.contentUris.collectAsState()
             val theme by themeManager.theme.collectAsState()
-            val activityNotFound: ActivityNotFoundIndicatorState by viewModel.activityNotFound.collectAsState(initial = ActivityNotFoundIndicatorState.DISMISS)
+            val activityNotFound: ActivityNotFoundIndicatorState by viewModel.activityNotFound.collectAsState()
+            val lifecycleState: LifecycleState by lifecycleManager.lifecycleState.collectAsState()
 
             AppTheme(theme.isDarkTheme()) {
                 Surface {
@@ -50,9 +55,18 @@ class ConfigureFolderActivity : ComponentActivity() {
                         onBackClick = { finish() }
                     )
 
-                    val lifecycleState: LifecycleState by lifecycleManager.lifecycleState.collectAsState()
-
                     LifecycleIndicator(lifecycleState = lifecycleState, ::finishApp)
+
+                    Crossfade(targetState = activityNotFound) { state ->
+                        when (state) {
+                            ActivityNotFoundIndicatorState.SHOW -> FadedBackground {
+                                ActivityNotFoundIndicator {
+                                    viewModel.dismissActivityNotFound()
+                                }
+                            }
+                            ActivityNotFoundIndicatorState.DISMISS -> pass
+                        }
+                    }
                 }
             }
         }
