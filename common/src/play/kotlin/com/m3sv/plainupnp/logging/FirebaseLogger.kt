@@ -14,7 +14,7 @@ private fun Throwable.recordException() {
 }
 
 @Singleton
-class Logger @Inject constructor() : Log {
+class DefaultLogger @Inject constructor() : Logger {
     override fun e(e: Throwable, message: String?, remote: Boolean) {
         if (message == null) {
             Timber.e(e)

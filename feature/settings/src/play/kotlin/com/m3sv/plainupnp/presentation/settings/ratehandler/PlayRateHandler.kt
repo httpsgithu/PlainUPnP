@@ -5,13 +5,13 @@ import android.app.Application
 import android.content.ActivityNotFoundException
 import com.google.android.play.core.review.ReviewManagerFactory
 import com.google.android.play.core.tasks.Task
-import com.m3sv.plainupnp.logging.Log
+import com.m3sv.plainupnp.logging.Logger
 import timber.log.Timber
 import javax.inject.Inject
 
 class PlayRateHandler @Inject constructor(
     application: Application,
-    private val log: Log
+    private val log: Logger
 ) : RateHandler {
     private val manager = ReviewManagerFactory.create(application)
 
