@@ -57,5 +57,16 @@ abstract class BaseContainer(
 
     val rawId: String = id
 
+    protected inline fun <T> Int.ifExists(block: (Int) -> T): T? {
+        if (this == -1)
+            return null
+
+        return block(this)
+    }
+
     abstract override fun getChildCount(): Int?
+
+    companion object {
+        const val DEFAULT_NOT_FOUND: String = "-"
+    }
 }

@@ -25,6 +25,8 @@ package com.m3sv.plainupnp.upnp.mediacontainers
 
 import android.content.ContentResolver
 import android.provider.MediaStore
+import androidx.core.database.getLongOrNull
+import androidx.core.database.getStringOrNull
 import com.m3sv.plainupnp.logging.Logger
 import org.fourthline.cling.support.model.container.Container
 
@@ -74,11 +76,11 @@ class ArtistContainer(
                 null
             )?.use { cursor ->
                 val artistsIdColumn = cursor.getColumnIndex(MediaStore.Audio.Artists._ID)
-                val artistsColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Artists.ARTIST)
+                val artistsColumn = cursor.getColumnIndex(MediaStore.Audio.Artists.ARTIST)
 
                 while (cursor.moveToNext()) {
-                    val artistId = cursor.getLong(artistsIdColumn).toString()
-                    val artist = cursor.getString(artistsColumn)
+                    val artistId = artistsIdColumn.ifExists(cursor::getLongOrNull)?.toString() ?: continue
+                    val artist = artistsColumn.ifExists(cursor::getStringOrNull) ?: continue
 
                     containers.add(
                         AlbumContainer(

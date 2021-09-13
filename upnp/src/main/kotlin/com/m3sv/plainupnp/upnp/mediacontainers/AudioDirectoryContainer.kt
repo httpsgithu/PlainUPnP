@@ -3,6 +3,7 @@ package com.m3sv.plainupnp.upnp.mediacontainers
 import android.content.ContentResolver
 import android.os.Build
 import android.provider.MediaStore
+import androidx.core.database.getStringOrNull
 import com.m3sv.plainupnp.common.util.isQ
 import com.m3sv.plainupnp.upnp.UpnpContentRepositoryImpl
 import com.m3sv.plainupnp.upnp.util.addAudioItem
@@ -79,27 +80,27 @@ class AudioDirectoryContainer(
             orderBy
         )?.use { cursor ->
             val audioIdColumn = cursor.getColumnIndex(MediaStore.Audio.Media._ID)
-            val audioTitleColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE)
-            val audioArtistColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)
-            val audioMimeTypeColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.MIME_TYPE)
-            val audioSizeColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.SIZE)
-            val audioDurationColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)
-            val audioAlbumColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM)
+            val audioTitleColumn = cursor.getColumnIndex(MediaStore.Audio.Media.TITLE)
+            val audioArtistColumn = cursor.getColumnIndex(MediaStore.Audio.Media.ARTIST)
+            val audioMimeTypeColumn = cursor.getColumnIndex(MediaStore.Audio.Media.MIME_TYPE)
+            val audioSizeColumn = cursor.getColumnIndex(MediaStore.Audio.Media.SIZE)
+            val audioDurationColumn = cursor.getColumnIndex(MediaStore.Audio.Media.DURATION)
+            val audioAlbumColumn = cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM)
             val dataColumn = cursor.getColumnIndex(AUDIO_DATA_PATH)
 
             while (cursor.moveToNext()) {
                 if (!isQ && !directory.samePath(cursor.getString(dataColumn)))
                     continue
 
-                val id = UpnpContentRepositoryImpl.AUDIO_PREFIX + cursor.getInt(audioIdColumn)
-                val title = cursor.getString(audioTitleColumn)
-                val creator = cursor.getString(audioArtistColumn)
-                val type = cursor.getString(audioMimeTypeColumn)
-                val size = cursor.getLong(audioSizeColumn)
-                val duration = cursor.getLong(audioDurationColumn)
-                val album = cursor.getString(audioAlbumColumn)
+                val id = UpnpContentRepositoryImpl.AUDIO_PREFIX + (audioIdColumn.ifExists(cursor::getLong) ?: continue)
+                val mimeType = audioMimeTypeColumn.ifExists(cursor::getStringOrNull) ?: continue
+                val title = audioTitleColumn.ifExists(cursor::getStringOrNull) ?: TITLE_NOT_FOUND
+                val creator = audioArtistColumn.ifExists(cursor::getStringOrNull)
+                val size = audioSizeColumn.ifExists(cursor::getLong) ?: 0L
+                val duration = audioDurationColumn.ifExists(cursor::getLong) ?: 0L
+                val album = audioAlbumColumn.ifExists(cursor::getString)
 
-                addAudioItem(baseUrl, id, title, type, 0L, 0L, size, duration, album, creator)
+                addAudioItem(baseUrl, id, title, mimeType, 0L, 0L, size, duration, album, creator)
             }
         }
 
@@ -107,6 +108,8 @@ class AudioDirectoryContainer(
     }
 
     companion object {
+        private const val TITLE_NOT_FOUND = "-"
+
         private val URI = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
 
         val AUDIO_DATA_PATH = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)

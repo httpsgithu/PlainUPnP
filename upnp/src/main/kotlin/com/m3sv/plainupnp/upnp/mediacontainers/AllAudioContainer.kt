@@ -2,6 +2,8 @@ package com.m3sv.plainupnp.upnp.mediacontainers
 
 import android.content.ContentResolver
 import android.provider.MediaStore
+import androidx.core.database.getLongOrNull
+import androidx.core.database.getStringOrNull
 import com.m3sv.plainupnp.upnp.UpnpContentRepositoryImpl
 import org.fourthline.cling.support.model.PersonWithRole
 import org.fourthline.cling.support.model.Res
@@ -73,24 +75,27 @@ class AllAudioContainer(
             orderBy
         )?.use { cursor ->
             val audioIdColumn = cursor.getColumnIndex(MediaStore.Audio.Media._ID)
-            val audioTitleColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME)
-            val audioArtistColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)
-            val audioMimeTypeColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.MIME_TYPE)
-            val audioSizeColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.SIZE)
-            val audioDurationColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)
-            val audioAlbumColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM)
+            val audioTitleColumn = cursor.getColumnIndex(MediaStore.Audio.Media.DISPLAY_NAME)
+            val audioArtistColumn = cursor.getColumnIndex(MediaStore.Audio.Media.ARTIST)
+            val audioMimeTypeColumn = cursor.getColumnIndex(MediaStore.Audio.Media.MIME_TYPE)
+            val audioSizeColumn = cursor.getColumnIndex(MediaStore.Audio.Media.SIZE)
+            val audioDurationColumn = cursor.getColumnIndex(MediaStore.Audio.Media.DURATION)
+            val audioAlbumColumn = cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM)
 
             while (cursor.moveToNext()) {
-                val id = UpnpContentRepositoryImpl.AUDIO_PREFIX + cursor.getInt(audioIdColumn)
-                val title = cursor.getString(audioTitleColumn)
-                val creator = cursor.getString(audioArtistColumn)
-                val type = cursor.getString(audioMimeTypeColumn)
-                val size = cursor.getLong(audioSizeColumn)
-                val duration = cursor.getLong(audioDurationColumn)
-                val album = cursor.getString(audioAlbumColumn)
+                val id = UpnpContentRepositoryImpl.AUDIO_PREFIX +
+                        (audioIdColumn.ifExists(cursor::getLongOrNull) ?: continue)
 
-                val mimeType = type.substring(0, type.indexOf('/'))
-                val mimeSubType = type.substring(type.indexOf('/') + 1)
+                val fileMimeType = audioMimeTypeColumn.ifExists(cursor::getStringOrNull) ?: continue
+                val title = audioTitleColumn.ifExists(cursor::getStringOrNull) ?: DEFAULT_NOT_FOUND
+                val creator = audioArtistColumn.ifExists(cursor::getStringOrNull) ?: DEFAULT_NOT_FOUND
+                val size = audioSizeColumn.ifExists(cursor::getLongOrNull) ?: 0L
+                val duration = audioDurationColumn.ifExists(cursor::getLongOrNull) ?: 0L
+                val album = audioAlbumColumn.ifExists(cursor::getStringOrNull) ?: DEFAULT_NOT_FOUND
+
+                val mimeType = fileMimeType.substring(0, fileMimeType.indexOf('/'))
+                val mimeSubType = fileMimeType.substring(fileMimeType.indexOf('/') + 1)
+
                 val res = Res(
                     MimeType(mimeType, mimeSubType),
                     size,

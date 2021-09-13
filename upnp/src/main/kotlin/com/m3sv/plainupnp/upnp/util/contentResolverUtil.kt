@@ -3,6 +3,8 @@ package com.m3sv.plainupnp.upnp.util
 import android.content.ContentResolver
 import android.net.Uri
 import android.provider.MediaStore
+import androidx.core.database.getLongOrNull
+import androidx.core.database.getStringOrNull
 import com.m3sv.plainupnp.upnp.UpnpContentRepositoryImpl
 
 inline fun ContentResolver.queryImages(
@@ -31,12 +33,13 @@ inline fun ContentResolver.queryImages(
         val imagesWidthColumn = cursor.getColumnIndex(MediaStore.Images.Media.WIDTH)
 
         while (cursor.moveToNext()) {
-            val id = UpnpContentRepositoryImpl.IMAGE_PREFIX + cursor.getInt(imagesIdColumn)
-            val title = cursor.getString(imagesTitleColumn)
-            val mime = cursor.getString(imagesMimeTypeColumn)
-            val size = cursor.getLong(imagesMediaSizeColumn)
-            val height = cursor.getLong(imagesHeightColumn)
-            val width = cursor.getLong(imagesWidthColumn)
+            val id =
+                UpnpContentRepositoryImpl.IMAGE_PREFIX + (imagesIdColumn.ifExists(cursor::getLongOrNull) ?: continue)
+            val mime = imagesMimeTypeColumn.ifExists(cursor::getStringOrNull) ?: continue
+            val title = imagesTitleColumn.ifExists(cursor::getStringOrNull) ?: "-"
+            val size = imagesMediaSizeColumn.ifExists(cursor::getLongOrNull) ?: 0L
+            val height = imagesHeightColumn.ifExists(cursor::getLongOrNull) ?: 0L
+            val width = imagesWidthColumn.ifExists(cursor::getLongOrNull) ?: 0L
 
             block(id, title, mime, size, width, height)
         }
@@ -73,25 +76,27 @@ inline fun ContentResolver.queryVideos(
         null
     )?.use { cursor ->
         val videoIdColumn = cursor.getColumnIndex(MediaStore.Video.Media._ID)
-        val videoTitleColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DISPLAY_NAME)
-        val videoArtistColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.ARTIST)
+        val videoTitleColumn = cursor.getColumnIndex(MediaStore.Video.Media.DISPLAY_NAME)
+        val videoArtistColumn = cursor.getColumnIndex(MediaStore.Video.Media.ARTIST)
         val videoMimeTypeColumn =
-            cursor.getColumnIndexOrThrow(MediaStore.Video.Media.MIME_TYPE)
-        val videoSizeColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.SIZE)
+            cursor.getColumnIndex(MediaStore.Video.Media.MIME_TYPE)
+        val videoSizeColumn = cursor.getColumnIndex(MediaStore.Video.Media.SIZE)
         val videoDurationColumn =
-            cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DURATION)
-        val videoHeightColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.HEIGHT)
-        val videoWidthColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.WIDTH)
+            cursor.getColumnIndex(MediaStore.Video.Media.DURATION)
+        val videoHeightColumn = cursor.getColumnIndex(MediaStore.Video.Media.HEIGHT)
+        val videoWidthColumn = cursor.getColumnIndex(MediaStore.Video.Media.WIDTH)
 
         while (cursor.moveToNext()) {
-            val id = UpnpContentRepositoryImpl.VIDEO_PREFIX + cursor.getInt(videoIdColumn)
-            val title = cursor.getString(videoTitleColumn)
-            val creator = cursor.getString(videoArtistColumn)
-            val mimeType = cursor.getString(videoMimeTypeColumn)
-            val size = cursor.getLong(videoSizeColumn)
-            val videoDuration = cursor.getLong(videoDurationColumn)
-            val videoHeight = cursor.getLong(videoHeightColumn)
-            val videoWidth = cursor.getLong(videoWidthColumn)
+            val id = UpnpContentRepositoryImpl.VIDEO_PREFIX +
+                    (videoIdColumn.ifExists(cursor::getLongOrNull) ?: continue)
+
+            val mimeType = videoMimeTypeColumn.ifExists(cursor::getStringOrNull) ?: continue
+            val title = videoTitleColumn.ifExists(cursor::getStringOrNull) ?: "-"
+            val creator = videoArtistColumn.ifExists(cursor::getStringOrNull)
+            val size = videoSizeColumn.ifExists(cursor::getLongOrNull) ?: 0L
+            val videoDuration = videoDurationColumn.ifExists(cursor::getLongOrNull) ?: 0L
+            val videoHeight = videoHeightColumn.ifExists(cursor::getLongOrNull) ?: 0L
+            val videoWidth = videoWidthColumn.ifExists(cursor::getLongOrNull) ?: 0L
 
             block(id, title, creator, mimeType, size, videoDuration, videoWidth, videoHeight)
         }
@@ -109,56 +114,9 @@ val VIDEO_COLUMNS = arrayOf(
     MediaStore.Video.Media.WIDTH
 )
 
-inline fun ContentResolver.queryAudio(
-    uri: Uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-    block: (
-        id: String,
-        title: String,
-        creator: String?,
-        mimeType: String,
-        size: Long,
-        duration: Long,
-        width: Long,
-        height: Long,
-        artist: String?,
-        album: String?,
-    ) -> Unit,
-) {
-    query(
-        uri,
-        AUDIO_COLUMNS,
-        null,
-        null,
-        null
-    )?.use { cursor ->
-        val audioIdColumn = cursor.getColumnIndex(MediaStore.Audio.Media._ID)
-        val audioTitleColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME)
-        val audioArtistColumn = cursor.getColumnIndex(MediaStore.Audio.Media.ARTIST)
-        val audioMimeTypeColumn = cursor.getColumnIndex(MediaStore.Audio.Media.MIME_TYPE)
-        val audioSizeColumn = cursor.getColumnIndex(MediaStore.Audio.Media.SIZE)
-        val audioDurationColumn = cursor.getColumnIndex(MediaStore.Audio.Media.DURATION)
-        val audioAlbumColumn = cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM)
+inline fun <T> Int.ifExists(block: (Int) -> T): T? {
+    if (this == -1)
+        return null
 
-        while (cursor.moveToNext()) {
-            val id = UpnpContentRepositoryImpl.AUDIO_PREFIX + cursor.getInt(audioIdColumn)
-            val title = cursor.getString(audioTitleColumn)
-            val creator = cursor.getString(audioArtistColumn)
-            val type = cursor.getString(audioMimeTypeColumn)
-            val size = cursor.getLong(audioSizeColumn)
-            val duration = cursor.getLong(audioDurationColumn)
-            val album = cursor.getString(audioAlbumColumn)
-
-            block(id, title, creator, type, size, duration, 0L, 0L, null, album)
-        }
-    }
+    return block(this)
 }
-
-val AUDIO_COLUMNS = arrayOf(
-    MediaStore.Audio.Media._ID,
-    MediaStore.Audio.Media.DISPLAY_NAME,
-    MediaStore.Audio.Media.ARTIST,
-    MediaStore.Audio.Media.MIME_TYPE,
-    MediaStore.Audio.Media.SIZE,
-    MediaStore.Audio.Media.DURATION,
-    MediaStore.Audio.Media.ALBUM
-)

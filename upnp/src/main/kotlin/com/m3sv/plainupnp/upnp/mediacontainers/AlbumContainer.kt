@@ -3,6 +3,7 @@ package com.m3sv.plainupnp.upnp.mediacontainers
 import android.content.ContentResolver
 import android.net.Uri
 import android.provider.MediaStore
+import androidx.core.database.getStringOrNull
 import com.m3sv.plainupnp.logging.Logger
 import org.fourthline.cling.support.model.container.Container
 import timber.log.Timber
@@ -20,11 +21,11 @@ class AlbumContainer(
 
     private val artist: String? = null
 
-    private val uri: Uri = artistId?.let {
-        MediaStore.Audio.Artists.Albums.getContentUri("external", it.toLong())
-    } ?: MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI
+    private val uri: Uri = artistId?.let(::getContentUri) ?: MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI
 
-    override fun getChildCount(): Int? {
+    private fun getContentUri(it: String) = MediaStore.Audio.Artists.Albums.getContentUri("external", it.toLong())
+
+    override fun getChildCount(): Int {
         val columns: Array<String> = if (artistId == null)
             arrayOf(MediaStore.Audio.Albums._ID)
         else
@@ -59,31 +60,34 @@ class AlbumContainer(
             null,
             null
         )?.use { cursor ->
-            var albumIdColumn: Int? = null
-            var albumColumn: Int? = null
-            var artistsColumn: Int? = null
+            val albumFactory: () -> Pair<String?, String?>
 
             if (artistId == null) {
-                albumIdColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Albums._ID)
-                albumColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Albums.ALBUM)
+                val albumIdColumn = cursor.getColumnIndex(MediaStore.Audio.Albums._ID)
+                val albumColumn = cursor.getColumnIndex(MediaStore.Audio.Albums.ALBUM)
+
+                albumFactory = {
+                    val albumId = albumIdColumn.ifExists(cursor::getLong)?.toString()
+                    val album = albumColumn.ifExists(cursor::getStringOrNull)
+
+                    albumId to album
+                }
             } else {
-                artistsColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Artists.Albums.ALBUM)
+                val artistsColumn = cursor.getColumnIndex(MediaStore.Audio.Artists.Albums.ALBUM)
+
+                albumFactory = {
+                    val albumId = artistsColumn.ifExists(cursor::getStringOrNull)
+                    val album = albumId?.let(::resolveAlbumId)
+
+                    albumId to album
+                }
             }
 
             while (cursor.moveToNext()) {
-                var albumId: String?
-                val album: String?
-
-                if (artistId == null) {
-                    albumId = cursor.getLong(albumIdColumn!!).toString()
-                    album = cursor.getString(albumColumn!!)
-                } else {
-                    album = cursor.getString(artistsColumn!!)
-                    albumId = resolveAlbumId(album)
-                }
+                val (albumId, album) = albumFactory()
 
                 if (albumId != null && album != null) {
-                    Timber.d(" current $id albumId : $albumId album : $album")
+                    logger.d(" Adding album $id albumId:$albumId album:$album")
                     containers.add(
                         AllAudioContainer(
                             id = albumId,
@@ -105,7 +109,7 @@ class AlbumContainer(
         return containers
     }
 
-    private fun resolveAlbumId(album: String): String? {
+    private fun resolveAlbumId(album: String): String {
         var result = ""
         val columns = arrayOf(MediaStore.Audio.Albums._ID)
         val where = MediaStore.Audio.Albums.ALBUM + "=?"
@@ -118,8 +122,7 @@ class AlbumContainer(
             whereVal, null
         )?.use { cursor ->
             if (cursor.moveToFirst())
-                result =
-                    cursor.getLong(cursor.getColumnIndex(MediaStore.Audio.Albums._ID)).toString()
+                result = cursor.getLong(cursor.getColumnIndex(MediaStore.Audio.Albums._ID)).toString()
         }
 
         return result

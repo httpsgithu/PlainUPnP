@@ -26,6 +26,8 @@ package com.m3sv.plainupnp.upnp.mediacontainers
 import android.content.ContentResolver
 import android.net.Uri
 import android.provider.MediaStore
+import androidx.core.database.getLongOrNull
+import androidx.core.database.getStringOrNull
 import com.m3sv.plainupnp.common.util.isQ
 import com.m3sv.plainupnp.upnp.UpnpContentRepositoryImpl
 import org.fourthline.cling.support.model.Res
@@ -49,7 +51,7 @@ class ImageDirectoryContainer(
 
     private val selectionArgs: Array<String> = arrayOf("%${directory.name}/${if (isQ) "" else "%"}")
 
-    override fun getChildCount(): Int? {
+    override fun getChildCount(): Int {
         val projection = arrayOf(
             MediaStore.Images.Media._ID,
             IMAGE_DATA_PATH
@@ -99,16 +101,18 @@ class ImageDirectoryContainer(
                 if (!isQ && !directory.samePath(cursor.getString(dataColumn)))
                     continue
 
-                val id = UpnpContentRepositoryImpl.IMAGE_PREFIX + cursor.getInt(imagesIdColumn)
-                val title = cursor.getString(imagesTitleColumn)
-                val mime = cursor.getString(imagesMimeTypeColumn)
-                val size = cursor.getLong(imagesMediaSizeColumn)
-                val height = cursor.getLong(imagesHeightColumn)
-                val width = cursor.getLong(imagesWidthColumn)
+                val id = UpnpContentRepositoryImpl.IMAGE_PREFIX +
+                        (imagesIdColumn.ifExists(cursor::getLongOrNull) ?: continue)
 
-                val mimeTypeSeparatorPosition = mime.indexOf('/')
-                val mimeType = mime.substring(0, mimeTypeSeparatorPosition)
-                val mimeSubType = mime.substring(mimeTypeSeparatorPosition + 1)
+                val fileMimeType = imagesMimeTypeColumn.ifExists(cursor::getStringOrNull) ?: continue
+                val title = imagesTitleColumn.ifExists(cursor::getStringOrNull) ?: DEFAULT_NOT_FOUND
+                val size = imagesMediaSizeColumn.ifExists(cursor::getLongOrNull) ?: 0L
+                val height = imagesHeightColumn.ifExists(cursor::getLongOrNull) ?: 0L
+                val width = imagesWidthColumn.ifExists(cursor::getLongOrNull) ?: 0L
+
+                val mimeTypeSeparatorPosition = fileMimeType.indexOf('/')
+                val mimeType = fileMimeType.substring(0, mimeTypeSeparatorPosition)
+                val mimeSubType = fileMimeType.substring(mimeTypeSeparatorPosition + 1)
 
                 val res = Res(
                     MimeType(mimeType, mimeSubType),

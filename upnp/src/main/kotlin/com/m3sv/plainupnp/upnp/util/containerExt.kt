@@ -74,10 +74,10 @@ fun BaseContainer.addAudioItem(
     mime: String,
     width: Long,
     height: Long,
-    size: Long,
+    size: Long?,
     duration: Long,
-    album: String,
-    creator: String,
+    album: String?,
+    creator: String?,
 ): DIDLObject {
     val (type, subtype) = mime.split('/')
 

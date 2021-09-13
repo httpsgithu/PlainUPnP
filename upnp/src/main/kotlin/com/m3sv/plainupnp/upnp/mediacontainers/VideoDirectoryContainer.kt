@@ -1,31 +1,10 @@
-/**
- * Copyright (C) 2013 Aurélien Chabot <aurelien></aurelien>@chabot.fr>
- *
- *
- * This file is part of DroidUPNP.
- *
- *
- * DroidUPNP is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- *
- * DroidUPNP is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- *
- * You should have received a copy of the GNU General Public License
- * along with DroidUPNP.  If not, see <http:></http:>//www.gnu.org/licenses/>.
- */
-
 package com.m3sv.plainupnp.upnp.mediacontainers
 
 import android.content.ContentResolver
 import android.os.Build
 import android.provider.MediaStore
+import androidx.core.database.getLongOrNull
+import androidx.core.database.getStringOrNull
 import com.m3sv.plainupnp.common.util.isQ
 import com.m3sv.plainupnp.upnp.UpnpContentRepositoryImpl
 import org.fourthline.cling.support.model.Res
@@ -95,7 +74,7 @@ class VideoDirectoryContainer(
             null
         )?.use { cursor ->
             val videoIdColumn = cursor.getColumnIndex(MediaStore.Video.Media._ID)
-            val videoTitleColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.TITLE)
+            val videoTitleColumn = cursor.getColumnIndex(MediaStore.Video.Media.TITLE)
             val videoArtistColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.ARTIST)
             val videoMimeTypeColumn =
                 cursor.getColumnIndexOrThrow(MediaStore.Video.Media.MIME_TYPE)
@@ -110,14 +89,16 @@ class VideoDirectoryContainer(
                 if (!isQ && !directory.samePath(cursor.getString(dataColumn)))
                     continue
 
-                val id = UpnpContentRepositoryImpl.VIDEO_PREFIX + cursor.getInt(videoIdColumn)
-                val title = cursor.getString(videoTitleColumn)
-                val creator = cursor.getString(videoArtistColumn)
-                val mimeType = cursor.getString(videoMimeTypeColumn)
-                val size = cursor.getLong(videoSizeColumn)
-                val videoDuration = cursor.getLong(videoDurationColumn)
-                val videoHeight = cursor.getLong(videoHeightColumn)
-                val videoWidth = cursor.getLong(videoWidthColumn)
+                val id = UpnpContentRepositoryImpl.VIDEO_PREFIX +
+                        (videoIdColumn.ifExists(cursor::getLongOrNull) ?: continue)
+
+                val mimeType = videoMimeTypeColumn.ifExists(cursor::getStringOrNull) ?: continue
+                val title = videoTitleColumn.ifExists(cursor::getString) ?: DEFAULT_NOT_FOUND
+                val creator = videoArtistColumn.ifExists(cursor::getStringOrNull)
+                val size = videoSizeColumn.ifExists(cursor::getLongOrNull) ?: 0L
+                val videoDuration = videoDurationColumn.ifExists(cursor::getLongOrNull) ?: 0L
+                val videoHeight = videoHeightColumn.ifExists(cursor::getLongOrNull) ?: 0L
+                val videoWidth = videoWidthColumn.ifExists(cursor::getLongOrNull) ?: 0L
 
                 val mimeTypeType = mimeType.substring(0, mimeType.indexOf('/'))
                 val mimeTypeSubType = mimeType.substring(mimeType.indexOf('/') + 1)

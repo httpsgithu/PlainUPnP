@@ -61,8 +61,8 @@ class UpnpManagerImpl @Inject constructor(
     override val volumeFlow: Flow<Int> = volumeRepository.volumeFlow
 
     override val isConnectedToRenderer: Flow<Boolean> = rendererDiscoveryObservable
-            .selectedRenderer
-            .map { it != null }
+        .selectedRenderer
+        .map { it != null }
 
     private val upnpInnerStateChannel = MutableSharedFlow<UpnpRendererState>()
     override val upnpRendererState: Flow<UpnpRendererState> = upnpInnerStateChannel
@@ -108,16 +108,16 @@ class UpnpManagerImpl @Inject constructor(
                             remotePaused = transportInfo.currentTransportState == TransportState.PAUSED_PLAYBACK
 
                             val state = UpnpRendererState.Default(
-                                    uri = uri,
-                                    type = type,
-                                    state = transportInfo.currentTransportState,
-                                    remainingDuration = positionInfo.remainingDuration,
-                                    duration = positionInfo.duration,
-                                    position = positionInfo.position,
-                                    elapsedPercent = positionInfo.elapsedPercent,
-                                    durationSeconds = positionInfo.trackDurationSeconds,
-                                    title = title,
-                                    artist = artist ?: ""
+                                uri = uri,
+                                type = type,
+                                state = transportInfo.currentTransportState,
+                                remainingDuration = positionInfo.remainingDuration,
+                                duration = positionInfo.duration,
+                                position = positionInfo.position,
+                                elapsedPercent = positionInfo.elapsedPercent,
+                                durationSeconds = positionInfo.trackDurationSeconds,
+                                title = title,
+                                artist = artist ?: ""
                             )
 
                             currentDuration = positionInfo.trackDurationSeconds
@@ -145,8 +145,8 @@ class UpnpManagerImpl @Inject constructor(
 
                     if (contentDirectory != null) {
                         safeNavigateTo(
-                                folderId = ROOT_FOLDER_ID,
-                                folderName = contentDirectory.friendlyName
+                            folderId = ROOT_FOLDER_ID,
+                            folderName = contentDirectory.friendlyName
                         )
                     }
                 }
@@ -160,8 +160,8 @@ class UpnpManagerImpl @Inject constructor(
         contentDirectoryObservable.selectedContentDirectory = upnpDevice
 
         safeNavigateTo(
-                folderId = ROOT_FOLDER_ID,
-                folderName = upnpDevice.friendlyName
+            folderId = ROOT_FOLDER_ID,
+            folderName = upnpDevice.friendlyName
         )
     }
 
@@ -210,13 +210,13 @@ class UpnpManagerImpl @Inject constructor(
                 val newMetadata = with(didlItem) {
                     // TODO genre && artURI
                     TrackMetadata(
-                            id,
-                            title,
-                            creator,
-                            "",
-                            "",
-                            firstResource.value,
-                            "object.item.$didlType"
+                        id,
+                        title,
+                        creator,
+                        "",
+                        "",
+                        firstResource.value,
+                        "object.item.$didlType"
                     )
                 }
 
@@ -297,7 +297,7 @@ class UpnpManagerImpl @Inject constructor(
         withContext(Dispatchers.IO) {
             runCatching {
                 avService?.let { service -> upnpRepository.stop(service) }
-            }.onFailure { logger.e(it, "Failed to stop playback") }
+            }
         }
     }
 
@@ -415,8 +415,8 @@ class UpnpManagerImpl @Inject constructor(
     }
 
     private suspend inline fun safeNavigateTo(
-            folderId: String,
-            folderName: String,
+        folderId: String,
+        folderName: String,
     ): Result = withContext(Dispatchers.IO) {
         Timber.d("Navigating to $folderId with name $folderName")
 
@@ -427,7 +427,7 @@ class UpnpManagerImpl @Inject constructor(
             Result.Error.GENERIC
         }
         val service: Service<*, *>? =
-                (selectedDevice as CDevice).device.findService(UDAServiceType(CONTENT_DIRECTORY))
+            (selectedDevice as CDevice).device.findService(UDAServiceType(CONTENT_DIRECTORY))
 
         if (service == null || !service.hasActions()) {
             return@withContext Result.Error.GENERIC
@@ -444,28 +444,28 @@ class UpnpManagerImpl @Inject constructor(
 
         val folder = when (folderId) {
             ROOT_FOLDER_ID -> Folder.Root(
-                    FolderModel(
-                            id = folderId,
-                            title = currentFolderName,
-                            contents = currentContent.value
-                    )
+                FolderModel(
+                    id = folderId,
+                    title = currentFolderName,
+                    contents = currentContent.value
+                )
             )
             else -> Folder.SubFolder(
-                    FolderModel(
-                            id = folderId,
-                            title = currentFolderName,
-                            contents = currentContent.value
-                    )
+                FolderModel(
+                    id = folderId,
+                    title = currentFolderName,
+                    contents = currentContent.value
+                )
             )
         }
 
         folderStack.value = when (folder) {
             is Folder.Root -> listOf(folder)
             is Folder.SubFolder -> folderStack
-                    .value
-                    .toMutableList()
-                    .apply { add(folder) }
-                    .toList()
+                .value
+                .toMutableList()
+                .apply { add(folder) }
+                .toList()
         }
 
         Result.Success
@@ -474,36 +474,36 @@ class UpnpManagerImpl @Inject constructor(
 
     private val avService: Service<*, *>?
         get() = rendererDiscoveryObservable
-                .selectedRenderer
-                .value
-                ?.let { renderer ->
-                    val service: Service<*, *> = (renderer as CDevice)
-                            .device
-                            .findService(UDAServiceType(AV_TRANSPORT))
-                            ?: return null
+            .selectedRenderer
+            .value
+            ?.let { renderer ->
+                val service: Service<*, *> = (renderer as CDevice)
+                    .device
+                    .findService(UDAServiceType(AV_TRANSPORT))
+                    ?: return null
 
-                    if (service.hasActions()) {
-                        service
-                    } else {
-                        null
-                    }
+                if (service.hasActions()) {
+                    service
+                } else {
+                    null
                 }
+            }
 
     private val rcService: Service<*, *>?
         get() = rendererDiscoveryObservable
-                .selectedRenderer
-                .value?.let { renderer ->
-                    val service: Service<*, *> = (renderer as CDevice)
-                            .device
-                            .findService(UDAServiceType(RENDERING_CONTROL))
-                            ?: return null
+            .selectedRenderer
+            .value?.let { renderer ->
+                val service: Service<*, *> = (renderer as CDevice)
+                    .device
+                    .findService(UDAServiceType(RENDERING_CONTROL))
+                    ?: return null
 
-                    if (service.hasActions())
-                        service
-                    else {
-                        null
-                    }
+                if (service.hasActions())
+                    service
+                else {
+                    null
                 }
+            }
 
     private suspend fun <T> withAvService(block: suspend (Service<*, *>) -> T): T? {
         return when (val avService = avService) {

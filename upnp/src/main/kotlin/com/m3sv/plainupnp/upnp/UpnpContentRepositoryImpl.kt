@@ -5,6 +5,8 @@ import android.content.ContentResolver
 import android.net.Uri
 import android.provider.DocumentsContract
 import android.provider.MediaStore
+import androidx.core.database.getLongOrNull
+import androidx.core.database.getStringOrNull
 import androidx.documentfile.provider.DocumentFile
 import com.m3sv.plainupnp.ContentModel
 import com.m3sv.plainupnp.ContentRepository
@@ -396,14 +398,22 @@ class UpnpContentRepositoryImpl @Inject constructor(
                 null,
                 null
             )?.use { cursor ->
+                val idColumn = cursor.getColumnIndex(mediaColumns[0])
+                val mimeColumn = cursor.getColumnIndex(mediaColumns[1])
+                val displayNameColumn = cursor.getColumnIndex(mediaColumns[2])
+                val sizeColumn = cursor.getColumnIndex(mediaColumns[3])
+                // Skip artist, we don't use it here for now
+                val albumArtistColumn = cursor.getColumnIndex(mediaColumns[5])
+                val albumColumn = cursor.getColumnIndex(mediaColumns[6])
+
                 while (cursor.moveToNext()) {
-                    val newDocumentUri = DocumentsContract.buildDocumentUriUsingTree(uri, cursor.getString(0))
-                    val mimeType = cursor.getString(1)
-                    val displayName = cursor.getString(2)
-                    val size = cursor.getLong(3)
-                    val artist = cursor.getString(4)
-                    val albumArtist = cursor.getString(5)
-                    val album = cursor.getString(6)
+                    val id = idColumn.ifExists(cursor::getStringOrNull) ?: continue
+                    val newDocumentUri = DocumentsContract.buildDocumentUriUsingTree(uri, id)
+                    val mimeType = mimeColumn.ifExists(cursor::getStringOrNull) ?: continue
+                    val displayName = displayNameColumn.ifExists(cursor::getStringOrNull) ?: "Unnamed"
+                    val size = sizeColumn.ifExists(cursor::getLongOrNull) ?: 0L
+                    val albumArtist = albumArtistColumn.ifExists(cursor::getStringOrNull)
+                    val album = albumArtistColumn.ifExists(cursor::getStringOrNull)
 
                     when {
                         mimeType == DocumentsContract.Document.MIME_TYPE_DIR -> launch {
@@ -413,7 +423,8 @@ class UpnpContentRepositoryImpl @Inject constructor(
                                 displayName
                             )
                         }
-                        mimeType != DocumentsContract.Document.MIME_TYPE_DIR && mimeType.isNotEmpty() -> {
+
+                        mimeType != DocumentsContract.Document.MIME_TYPE_DIR && !mimeType.isNullOrBlank() -> {
                             addFile(
                                 newContainer,
                                 newDocumentUri,
@@ -507,7 +518,7 @@ class UpnpContentRepositoryImpl @Inject constructor(
         ) -> BaseContainer,
     ) {
         val folders: MutableMap<String, Map<String, Any>> = mutableMapOf()
-        buildSet<String> {
+        buildSet {
             application.contentResolver.query(
                 externalContentUri,
                 arrayOf(column),
@@ -515,18 +526,19 @@ class UpnpContentRepositoryImpl @Inject constructor(
                 null,
                 null
             )?.use { cursor ->
-                val pathColumn = cursor.getColumnIndexOrThrow(column)
+                val pathColumn = cursor.getColumnIndex(column)
 
                 while (cursor.moveToNext()) {
-                    cursor
-                        .getString(pathColumn)
+                    pathColumn
+                        .ifExists(cursor::getString)
                         ?.let { path ->
                             when {
                                 path.startsWith("/") -> path.drop(1)
                                 path.endsWith("/") -> path.dropLast(1)
                                 else -> path
                             }
-                        }?.also(::add)
+                        }
+                        ?.also(::add)
                 }
             }
         }.map { it.split("/") }.forEach {
@@ -610,5 +622,12 @@ class UpnpContentRepositoryImpl @Inject constructor(
             MediaStore.MediaColumns.ALBUM_ARTIST,
             MediaStore.MediaColumns.ALBUM
         )
+
+        private inline fun <T> Int.ifExists(block: (Int) -> T): T? {
+            if (this == -1)
+                return null
+
+            return block(this)
+        }
     }
 }

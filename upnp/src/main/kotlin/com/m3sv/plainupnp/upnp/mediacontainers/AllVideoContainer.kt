@@ -31,7 +31,7 @@ class AllVideoContainer(
         )?.use { it.count } ?: 0
 
     override fun getContainers(): List<Container> {
-        contentResolver.queryVideos { id, title, creator, mimeType, size, duration, width, height ->
+        contentResolver.queryVideos { id, title, _, mimeType, size, duration, width, height ->
             addVideoItem(baseUrl, id, title, mimeType, width, height, size, duration)
         }
 
