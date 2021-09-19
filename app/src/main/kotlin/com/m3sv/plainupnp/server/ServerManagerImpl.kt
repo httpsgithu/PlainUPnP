@@ -3,6 +3,7 @@ package com.m3sv.plainupnp.server
 import com.m3sv.plainupnp.common.preferences.Preferences
 import com.m3sv.plainupnp.common.preferences.PreferencesRepository
 import com.m3sv.plainupnp.interfaces.LifecycleManager
+import com.m3sv.plainupnp.logging.Logger
 import com.m3sv.plainupnp.upnp.android.AndroidUpnpServiceImpl
 import com.m3sv.plainupnp.upnp.server.MediaServer
 import kotlinx.coroutines.CoroutineScope
@@ -24,7 +25,8 @@ class ServerManagerImpl @Inject constructor(
     private val mediaServer: MediaServer,
     private val preferencesRepository: PreferencesRepository,
     private val lifecycleManager: LifecycleManager,
-    private val controlPoint: ControlPoint
+    private val controlPoint: ControlPoint,
+    private val logger: Logger
 ) : ServerManager {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -60,12 +62,16 @@ class ServerManagerImpl @Inject constructor(
                 if (isOn) {
                     scope.launch {
                         (upnpService as AndroidUpnpServiceImpl).addLocalDevice()
-                        mediaServer.start()
+                        runCatching { mediaServer.start() }.onFailure {
+                            logger.e(it, "Failed to start media server!")
+                        }
                     }
                 } else {
                     scope.launch {
                         (upnpService as AndroidUpnpServiceImpl).removeLocalDevice()
-                        mediaServer.stop()
+                        runCatching { mediaServer.stop() }.onFailure {
+                            logger.e(it, "Failed to stop media server!")
+                        }
                     }
                 }
             }

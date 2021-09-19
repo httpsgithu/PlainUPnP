@@ -36,7 +36,7 @@ class MediaServer @Inject constructor(
     private val contentRepository: ContentRepository,
 ) : SimpleInputStreamServer(null, PORT, listOf(), true) {
 
-    private val serverScope = CoroutineScope(Executors.newFixedThreadPool(8).asCoroutineDispatcher())
+    private val serverScope = CoroutineScope(Executors.newFixedThreadPool(16).asCoroutineDispatcher())
 
     init {
         setAsyncRunner(object : AsyncRunner {
@@ -56,7 +56,7 @@ class MediaServer @Inject constructor(
             override fun exec(code: ClientHandler) {
                 serverScope.launch {
                     mutex.withLock { running.add(code) }
-                    code.run()
+                    runCatching { code.run() }.onFailure { logger.e(it, "ClientHandler failed") }
                 }
             }
         })
