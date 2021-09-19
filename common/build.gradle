@@ -24,7 +24,7 @@ dependencies {
 
     implementation(libs.bundles.cling)
 
-    implementation "androidx.datastore:datastore:1.0.0-beta02"
+    implementation "androidx.datastore:datastore:1.0.0"
     api "com.google.protobuf:protobuf-javalite:3.10.0"
 
     implementation project(':resources')
