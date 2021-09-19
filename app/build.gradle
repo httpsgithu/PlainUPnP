@@ -107,7 +107,7 @@ dependencies {
     testImplementation(libs.test.mockito.core)
 }
 
-if (rootProject.ext.isPlay) {
+if (isPlayStoreBuild) {
     apply plugin: 'com.google.gms.google-services'
     apply plugin: 'com.google.firebase.crashlytics'
 }
