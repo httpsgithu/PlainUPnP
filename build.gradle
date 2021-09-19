@@ -15,7 +15,7 @@ buildscript {
 
     ext.buildConfig.version['name'] = "${buildConfig.version.major}.${buildConfig.version.minor}.${buildConfig.version.patch}"
 
-    ext.isPlayStoreBuild = rootProject.properties['plainupnp.isPlayStoreBuild']
+    ext.isPlayStoreBuild = rootProject.properties['plainupnp.isPlayStoreBuild'] == true
 
     repositories {
         mavenCentral()
