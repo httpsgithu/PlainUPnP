@@ -1,13 +1,13 @@
 package com.m3sv.plainupnp.upnp.util
 
 import org.fourthline.cling.support.model.PositionInfo
-import java.time.Duration
 import kotlin.math.abs
+import kotlin.time.Duration
 
 inline val PositionInfo.remainingDuration: String
     get() {
-        val duration = Duration.ofSeconds(trackRemainingSeconds)
-        val seconds = duration.seconds
+        val duration = Duration.seconds(trackRemainingSeconds)
+        val seconds = duration.inWholeSeconds
         val absSeconds = abs(seconds)
         val positive = "%d:%02d:%02d".format(
             absSeconds / 3600,
@@ -22,8 +22,8 @@ inline val PositionInfo.remainingDuration: String
 
 inline val PositionInfo.duration: String
     get() {
-        val duration = Duration.ofSeconds(trackDurationSeconds)
-        val seconds = duration.seconds
+        val duration = Duration.seconds(trackDurationSeconds)
+        val seconds = duration.inWholeSeconds
         val absSeconds = abs(seconds)
         val positive = "%d:%02d:%02d".format(
             absSeconds / 3600,
@@ -38,8 +38,8 @@ inline val PositionInfo.duration: String
 
 inline val PositionInfo.position: String
     get() {
-        val duration = Duration.ofSeconds(trackElapsedSeconds)
-        val seconds = duration.seconds
+        val duration = Duration.seconds(trackElapsedSeconds)
+        val seconds = duration.inWholeSeconds
         val absSeconds = abs(seconds)
         val positive = "%d:%02d:%02d".format(
             absSeconds / 3600,
