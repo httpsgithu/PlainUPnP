@@ -11,8 +11,8 @@ import kotlinx.coroutines.flow.Flow
 
 interface UpnpManager : UpnpVolumeManager, PlaybackManager {
     val isConnectedToRenderer: Flow<Boolean>
-    val renderers: Flow<List<DeviceDisplay>>
-    val contentDirectories: Flow<List<DeviceDisplay>>
+    val renderers: Flow<Set<DeviceDisplay>>
+    val contentDirectories: Flow<Set<DeviceDisplay>>
     val upnpRendererState: Flow<UpnpRendererState>
     val navigationStack: Flow<List<Folder>>
 

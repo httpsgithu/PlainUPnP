@@ -69,7 +69,7 @@ class SelectContentDirectoryActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            val contentDirectories by viewModel.state.collectAsState()
+            val contentDirectories by viewModel.contentDirectories.collectAsState()
             val currentTheme by themeManager.theme.collectAsState()
             var loadingDeviceDisplay: DeviceDisplay? by remember { mutableStateOf(null) }
 

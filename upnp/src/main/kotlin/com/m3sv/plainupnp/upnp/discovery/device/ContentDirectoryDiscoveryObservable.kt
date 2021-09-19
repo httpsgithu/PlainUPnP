@@ -22,14 +22,10 @@ class ContentDirectoryDiscoveryObservable @Inject constructor(
 
     private val contentDirectories = LinkedHashSet<DeviceDisplay>()
 
-    val currentContentDirectories: List<DeviceDisplay>
-        get() = contentDirectories.toList()
-
-    operator fun invoke() = callbackFlow<List<DeviceDisplay>> {
+    operator fun invoke() = callbackFlow<Set<DeviceDisplay>> {
         contentDirectoryDiscovery.startObserving()
 
-        val callback = object :
-            DeviceDiscoveryObserver {
+        val callback = object : DeviceDiscoveryObserver {
             override fun addedDevice(event: UpnpDeviceEvent) {
                 handleEvent(event)
                 sendContentDirectories()
@@ -77,7 +73,7 @@ class ContentDirectoryDiscoveryObservable @Inject constructor(
 
             private fun sendContentDirectories() {
                 if (!isClosedForSend)
-                    trySendBlocking(currentContentDirectories)
+                    trySendBlocking(contentDirectories)
             }
         }
 

@@ -67,8 +67,8 @@ class UpnpManagerImpl @Inject constructor(
     private val upnpInnerStateChannel = MutableSharedFlow<UpnpRendererState>()
     override val upnpRendererState: Flow<UpnpRendererState> = upnpInnerStateChannel
 
-    override val contentDirectories: Flow<List<DeviceDisplay>> = contentDirectoryObservable()
-    override val renderers: Flow<List<DeviceDisplay>> = rendererDiscoveryObservable()
+    override val contentDirectories: Flow<Set<DeviceDisplay>> = contentDirectoryObservable()
+    override val renderers: Flow<Set<DeviceDisplay>> = rendererDiscoveryObservable()
 
     private var isPlayingLocal: Boolean = false
     private val updateChannel = MutableSharedFlow<Pair<Item, Service<*, *>>?>()
