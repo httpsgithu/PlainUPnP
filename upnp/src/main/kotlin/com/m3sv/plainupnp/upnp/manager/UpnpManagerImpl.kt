@@ -101,8 +101,13 @@ class UpnpManagerImpl @Inject constructor(
                     while (isActive) {
                         delay(500)
 
-                        val transportInfo = async { upnpRepository.getTransportInfo(service) }
-                        val positionInfo = async { upnpRepository.getPositionInfo(service) }
+                        val transportInfo = async {
+                            runCatching { upnpRepository.getTransportInfo(service) }.getOrNull()
+                        }
+
+                        val positionInfo = async {
+                            runCatching { upnpRepository.getPositionInfo(service) }.getOrNull()
+                        }
 
                         suspend fun processInfo(transportInfo: TransportInfo, positionInfo: PositionInfo) {
                             remotePaused = transportInfo.currentTransportState == TransportState.PAUSED_PLAYBACK
@@ -132,7 +137,10 @@ class UpnpManagerImpl @Inject constructor(
                             }
                         }
 
-                        processInfo(transportInfo.await(), positionInfo.await())
+                        processInfo(
+                            transportInfo.await() ?: return@launch,
+                            positionInfo.await() ?: return@launch
+                        )
                     }
                 }
             }.collect()
