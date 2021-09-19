@@ -19,7 +19,7 @@ platform :android do
 
   desc "Runs all the tests"
   lane :test do
-    gradle(task: "test")
+    gradle(task: "testOssDebugUnitTest")
   end
 
   lane :playstore do
