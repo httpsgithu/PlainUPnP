@@ -432,18 +432,21 @@ class UpnpManagerImpl @Inject constructor(
 
         if (selectedDevice == null) {
             logger.e("Selected content directory is null!")
-            Result.Error.GENERIC
+            return@withContext Result.Error.GENERIC
         }
+
         val service: Service<*, *>? =
             (selectedDevice as CDevice).device.findService(UDAServiceType(CONTENT_DIRECTORY))
 
         if (service == null || !service.hasActions()) {
+            logger.e("Service is null or has no actions")
             return@withContext Result.Error.GENERIC
         }
 
         try {
             currentContent.value = upnpRepository.browse(service, folderId)
         } catch (e: Exception) {
+            logger.e("Failed to browse")
             return@withContext Result.Error.GENERIC
         }
 
