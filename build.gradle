@@ -5,15 +5,10 @@ buildscript {
             'targetSdk' : 30,
             'buildTools': '30.0.3',
             'version'   : [
-                    'major': 3,
-                    'minor': 0,
-                    'patch': 2,
-                    'build': 0,
-                    'code' : 75
+                    'code': 75,
+                    'name': "3.0.2"
             ],
     ]
-
-    ext.buildConfig.version['name'] = "${buildConfig.version.major}.${buildConfig.version.minor}.${buildConfig.version.patch}"
 
     ext.isPlayStoreBuild = rootProject.properties['plainupnp.isPlayStoreBuild'].toBoolean()
 
